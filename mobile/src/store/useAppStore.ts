@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { User, TodayData, DashboardData, GamificationProfile } from '../types';
 import { setAuthToken } from '../api/client';
 
@@ -44,34 +46,52 @@ interface AppState {
   logout: () => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  user: null,
-  hasCompletedOnboarding: false,
-  assessment: {},
-  today: null,
-  dashboard: null,
-  gamification: null,
-  activeSessionId: null,
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      user: null,
+      hasCompletedOnboarding: false,
+      assessment: {},
+      today: null,
+      dashboard: null,
+      gamification: null,
+      activeSessionId: null,
 
-  setUser: (user) => {
-    setAuthToken(user?.token ?? null);
-    set({ user });
-  },
+      setUser: (user) => {
+        setAuthToken(user?.token ?? null);
+        set({ user });
+      },
 
-  setHasCompletedOnboarding: (v) => set({ hasCompletedOnboarding: v }),
+      setHasCompletedOnboarding: (v) => set({ hasCompletedOnboarding: v }),
 
-  updateAssessment: (patch) =>
-    set((state) => ({ assessment: { ...state.assessment, ...patch } })),
+      updateAssessment: (patch) =>
+        set((state) => ({ assessment: { ...state.assessment, ...patch } })),
 
-  resetAssessment: () => set({ assessment: {} }),
+      resetAssessment: () => set({ assessment: {} }),
 
-  setToday: (data) => set({ today: data }),
-  setDashboard: (data) => set({ dashboard: data }),
-  setGamification: (data) => set({ gamification: data }),
-  setActiveSessionId: (id) => set({ activeSessionId: id }),
+      setToday: (data) => set({ today: data }),
+      setDashboard: (data) => set({ dashboard: data }),
+      setGamification: (data) => set({ gamification: data }),
+      setActiveSessionId: (id) => set({ activeSessionId: id }),
 
-  logout: () => {
-    setAuthToken(null);
-    set({ user: null, hasCompletedOnboarding: false, assessment: {}, today: null });
-  },
-}));
+      logout: () => {
+        setAuthToken(null);
+        set({ user: null, hasCompletedOnboarding: false, assessment: {}, today: null });
+      },
+    }),
+    {
+      name: 'breathconnection-store',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        user: state.user,
+        hasCompletedOnboarding: state.hasCompletedOnboarding,
+        assessment: state.assessment,
+      }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.user?.token) {
+          setAuthToken(state.user.token);
+        }
+      },
+    }
+  )
+);

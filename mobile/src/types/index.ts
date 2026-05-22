@@ -112,8 +112,16 @@ export type MainTabParamList = {
   Profile: undefined;
 };
 
+export type ProgressStackParamList = {
+  Dashboard: undefined;
+  MetricEntry: undefined;
+  Leaderboard: undefined;
+};
+
 export type HomeStackParamList = {
   HomeScreen: undefined;
   SessionPlayer: { videoId: string; sessionId?: string };
   SessionComplete: { gamificationEvents: Array<{ type: string; data: Record<string, unknown> }>; coherenceAchieved: boolean };
+  MorningCheckIn: undefined;
+  Programme: undefined;
 };

@@ -6,6 +6,8 @@ import sessionsRoutes from './sessions';
 import metricsRoutes from './metrics';
 import wearablesRoutes from './wearables';
 import gamificationRoutes from './gamification';
+import checkinRoutes from './checkin';
+import reportsRoutes from './reports';
 
 const router = Router();
 
@@ -16,5 +18,7 @@ router.use('/sessions', sessionsRoutes);
 router.use('/metrics', metricsRoutes);
 router.use('/wearables', wearablesRoutes);
 router.use('/gamification', gamificationRoutes);
+router.use('/checkin', checkinRoutes);
+router.use('/reports', reportsRoutes);
 
 export default router;

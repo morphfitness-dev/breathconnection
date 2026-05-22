@@ -119,6 +119,24 @@ export function HomeScreen({ navigation }: Props) {
             </View>
           )}
 
+          {/* Daily Actions */}
+          <View style={styles.actionsRow}>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('MorningCheckIn')}
+            >
+              <Text style={styles.actionIcon}>🌅</Text>
+              <Text style={styles.actionLabel}>Morning{'\n'}Check-In</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => navigation.navigate('Programme')}
+            >
+              <Text style={styles.actionIcon}>📅</Text>
+              <Text style={styles.actionLabel}>My{'\n'}Programme</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Quick Access */}
           <View>
             <Text style={styles.sectionTitle}>Quick Access</Text>
@@ -183,4 +201,8 @@ const styles = StyleSheet.create({
   streakIcon: { fontSize: 28 },
   streakTitle: { color: COLORS.textPrimary, fontSize: 14, fontWeight: '600' },
   streakSub: { color: COLORS.textMuted, fontSize: 12 },
+  actionsRow: { flexDirection: 'row', gap: SPACING.sm },
+  actionCard: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: 14, padding: SPACING.md, alignItems: 'center', gap: SPACING.xs, borderWidth: 1, borderColor: COLORS.border },
+  actionIcon: { fontSize: 26 },
+  actionLabel: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '600', textAlign: 'center' },
 });

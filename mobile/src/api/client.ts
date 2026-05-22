@@ -102,3 +102,33 @@ export async function getBoltLeaderboard() {
   const { data } = await api.get('/gamification/bolt-leaderboard');
   return data;
 }
+
+export async function morningCheckIn(payload: Record<string, unknown>) {
+  const { data } = await api.post('/checkin/morning', payload);
+  return data;
+}
+
+export async function getProgrammeFull() {
+  const { data } = await api.get('/reports/programme/full');
+  return data;
+}
+
+export async function getBiometricInsights() {
+  const { data } = await api.get('/reports/biometric-insights');
+  return data;
+}
+
+export async function adaptProgramme() {
+  const { data } = await api.post('/reports/adapt-programme');
+  return data;
+}
+
+export async function getMonthlyReport(month: string) {
+  const { data } = await api.get(`/checkin/monthly-report/${month}`);
+  return data;
+}
+
+export async function triggerMonthlyReport(month: string) {
+  const { data } = await api.post('/checkin/monthly-report', { month });
+  return data;
+}

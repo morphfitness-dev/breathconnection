@@ -110,25 +110,15 @@ router.post('/connect', requireAuth, async (req: AuthRequest, res: Response) => 
   const userId = req.userId!;
   const { deviceType, accessToken, refreshToken } = parse.data;
 
-  const connection = await prisma.wearableConnection.upsert({
-    where: {
-      id: (await prisma.wearableConnection.findFirst({ where: { userId, deviceType } }))?.id ?? 'new',
-    },
-    update: {
-      isConnected: true,
-      accessToken,
-      refreshToken,
-      lastSyncedAt: new Date(),
-    },
-    create: {
-      userId,
-      deviceType,
-      isConnected: true,
-      accessToken,
-      refreshToken,
-      lastSyncedAt: new Date(),
-    },
-  });
+  const existing = await prisma.wearableConnection.findFirst({ where: { userId, deviceType } });
+  const connection = existing
+    ? await prisma.wearableConnection.update({
+        where: { id: existing.id },
+        data: { isConnected: true, accessToken, refreshToken, lastSyncedAt: new Date() },
+      })
+    : await prisma.wearableConnection.create({
+        data: { userId, deviceType, isConnected: true, accessToken, refreshToken, lastSyncedAt: new Date() },
+      });
 
   res.json({ connection, device: WEARABLE_CATALOGUE[deviceType as keyof typeof WEARABLE_CATALOGUE] });
 });

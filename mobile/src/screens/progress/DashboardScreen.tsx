@@ -2,12 +2,17 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { COLORS, SPACING, PILLAR_CONFIG, getNSScoreColor } from '../../constants/theme';
-import { getDashboard, logMetric } from '../../api/client';
+import { getDashboard } from '../../api/client';
 import { useAppStore } from '../../store/useAppStore';
-import type { DashboardData } from '../../types';
+import type { DashboardData, ProgressStackParamList } from '../../types';
 
-export function DashboardScreen() {
+interface Props {
+  navigation: NativeStackNavigationProp<ProgressStackParamList, 'Dashboard'>;
+}
+
+export function DashboardScreen({ navigation }: Props) {
   const { dashboard, setDashboard } = useAppStore();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -32,7 +37,23 @@ export function DashboardScreen() {
           contentContainerStyle={styles.container}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
         >
-          <Text style={styles.screenTitle}>Progress</Text>
+          <View style={styles.screenHeader}>
+            <Text style={styles.screenTitle}>Progress</Text>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => navigation.navigate('MetricEntry')}
+              >
+                <Text style={styles.headerButtonText}>+ Log</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.headerButton, styles.headerButtonSecondary]}
+                onPress={() => navigation.navigate('Leaderboard')}
+              >
+                <Text style={styles.headerButtonTextSecondary}>🏆</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
           {/* Three Primary Numbers */}
           <Text style={styles.sectionTitle}>Today's Metrics</Text>
@@ -197,7 +218,13 @@ function formatStreakType(type: string) {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   container: { padding: SPACING.lg, gap: SPACING.lg, paddingBottom: SPACING.xxl },
+  screenHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   screenTitle: { color: COLORS.textPrimary, fontSize: 28, fontWeight: '700' },
+  headerActions: { flexDirection: 'row', gap: SPACING.sm },
+  headerButton: { backgroundColor: COLORS.primary, borderRadius: 10, paddingVertical: 6, paddingHorizontal: 12 },
+  headerButtonSecondary: { backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.border },
+  headerButtonText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  headerButtonTextSecondary: { fontSize: 16 },
   sectionTitle: { color: COLORS.textPrimary, fontSize: 18, fontWeight: '600' },
   primaryRow: { flexDirection: 'row', gap: SPACING.sm },
   primaryCard: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: 14, padding: SPACING.md, gap: 2, borderWidth: 1, alignItems: 'center' },
