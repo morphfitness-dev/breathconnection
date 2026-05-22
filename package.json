@@ -1,0 +1,15 @@
+{
+  "name": "breathconnection",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "mobile"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:mobile": "npm run start --workspace=mobile",
+    "build:backend": "npm run build --workspace=backend",
+    "test:backend": "npm run test --workspace=backend"
+  }
+}

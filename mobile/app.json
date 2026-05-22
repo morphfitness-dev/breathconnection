@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "The Breath Connection",
+    "slug": "breathconnection",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0A0E1A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.breathconnection.app",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "The Breath Connection reads HRV, heart rate, and breathing data to personalise your programme.",
+        "NSHealthUpdateUsageDescription": "The Breath Connection writes session data to Apple Health.",
+        "NSCameraUsageDescription": "Used for breathing rate measurement via camera rPPG."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0E1A"
+      },
+      "package": "com.breathconnection.app"
+    },
+    "plugins": [
+      "expo-haptics"
+    ]
+  }
+}
