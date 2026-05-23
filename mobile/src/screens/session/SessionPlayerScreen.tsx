@@ -112,7 +112,7 @@ export function SessionPlayerScreen({ navigation, route }: Props) {
     const cycleTime = (inhale + holdIn + exhale + holdOut) * 1000;
 
     setBreathPhase('inhale');
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
     let offset = inhale * 1000;
     if (holdIn > 0) {

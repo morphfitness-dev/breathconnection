@@ -9,7 +9,9 @@
     "splash": {
       "backgroundColor": "#0A0E1A"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.breathconnection.app",
@@ -25,8 +27,10 @@
       },
       "package": "com.breathconnection.app"
     },
-    "plugins": [
-      "expo-haptics"
-    ]
+    "plugins": [],
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    }
   }
 }

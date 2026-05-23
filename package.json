@@ -11,5 +11,10 @@
     "dev:mobile": "npm run start --workspace=mobile",
     "build:backend": "npm run build --workspace=backend",
     "test:backend": "npm run test --workspace=backend"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~3.2.3",
+    "react-dom": "^18.2.0",
+    "react-native-web": "^0.19.13"
   }
 }
