@@ -6,12 +6,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { OnboardingStackParamList } from '../../types';
 import { COLORS, SPACING } from '../../constants/theme';
 import { useAppStore } from '../../store/useAppStore';
-import { register, login } from '../../api/client';
+import { register, login, getAssessment } from '../../api/client';
 
 type Props = { navigation: NativeStackNavigationProp<OnboardingStackParamList, 'Welcome'> };
 
 export function WelcomeScreen({ navigation }: Props) {
   const setUser = useAppStore(s => s.setUser);
+  const setHasCompletedOnboarding = useAppStore(s => s.setHasCompletedOnboarding);
   const [mode, setMode] = useState<'landing' | 'login' | 'register'>('landing');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +37,15 @@ export function WelcomeScreen({ navigation }: Props) {
     try {
       const data = await login(email, password);
       setUser({ id: data.userId, email: data.email, name: data.name, token: data.token });
-      navigation.navigate('BOLTTest');
+      // Check if this user already completed onboarding on another device
+      try {
+        await getAssessment();
+        setHasCompletedOnboarding(true);
+        // AppNavigator will switch to Main automatically
+      } catch {
+        // No existing assessment — go through onboarding
+        navigation.navigate('BOLTTest');
+      }
     } catch (e: any) {
       Alert.alert('Error', e.response?.data?.error ?? 'Login failed');
     } finally { setLoading(false); }

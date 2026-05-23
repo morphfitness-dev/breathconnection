@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING } from '../../constants/theme';
 import { useAppStore } from '../../store/useAppStore';
-import { logMetric, connectWearable } from '../../api/client';
+import { logMetric, connectWearable, triggerMonthlyReport, getMonthlyReport } from '../../api/client';
 
 export function ProfileScreen() {
   const { user, logout } = useAppStore();
@@ -12,6 +12,18 @@ export function ProfileScreen() {
   const [systolic, setSystolic] = useState('');
   const [diastolic, setDiastolic] = useState('');
   const [saving, setSaving] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
+
+  async function generateMonthlyReport() {
+    const month = new Date().toISOString().slice(0, 7); // YYYY-MM
+    setGeneratingReport(true);
+    try {
+      const result = await triggerMonthlyReport(month);
+      Alert.alert('Monthly Report Ready', result.narrative ?? 'Your report has been generated. Check the Progress tab.');
+    } catch {
+      Alert.alert('Error', 'Could not generate report.');
+    } finally { setGeneratingReport(false); }
+  }
 
   async function saveBP() {
     const s = parseInt(systolic);
@@ -126,12 +138,22 @@ export function ProfileScreen() {
             </View>
           </View>
 
-          {/* Phase 2 Teaser */}
-          <View style={styles.phase2Card}>
-            <Text style={styles.phase2Title}>Coming in Phase 2</Text>
-            <Text style={styles.phase2Body}>
-              In-session biometric adaptation · EEG brainwave feedback · Monthly Physiology Reports · Gamification engine with all 6 mechanics
+          {/* Monthly Report */}
+          <Text style={styles.sectionTitle}>Monthly Report</Text>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Physiology Report</Text>
+            <Text style={styles.cardDesc}>
+              Analyses your technique effectiveness, HRV trends, BOLT progress, and breathing rate improvements over the past 30 days.
             </Text>
+            <TouchableOpacity
+              style={[styles.reportButton, generatingReport && styles.disabledButton]}
+              onPress={generateMonthlyReport}
+              disabled={generatingReport}
+            >
+              <Text style={styles.reportButtonText}>
+                {generatingReport ? 'Generating…' : 'Generate This Month\'s Report'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Logout */}
@@ -181,9 +203,8 @@ const styles = StyleSheet.create({
   deviceChip: { backgroundColor: COLORS.bgElevated, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 12, borderWidth: 1 },
   deviceName: { fontSize: 13, fontWeight: '600' },
   deviceConnect: { color: COLORS.textMuted, fontSize: 11 },
-  phase2Card: { backgroundColor: COLORS.primary + '0A', borderRadius: 16, padding: SPACING.lg, gap: SPACING.sm, borderWidth: 1, borderColor: COLORS.primary + '22' },
-  phase2Title: { color: COLORS.primary, fontSize: 14, fontWeight: '600' },
-  phase2Body: { color: COLORS.textSecondary, fontSize: 13, lineHeight: 19 },
+  reportButton: { backgroundColor: COLORS.primary, borderRadius: 12, padding: 14, alignItems: 'center', marginTop: SPACING.xs },
+  reportButtonText: { color: '#fff', fontSize: 14, fontWeight: '700' },
   logoutButton: { borderWidth: 1, borderColor: COLORS.error + '44', borderRadius: 14, padding: 14, alignItems: 'center' },
   logoutText: { color: COLORS.error, fontSize: 15, fontWeight: '600' },
 });

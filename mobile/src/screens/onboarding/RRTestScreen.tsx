@@ -15,25 +15,29 @@ export function RRTestScreen({ navigation }: Props) {
   const [count, setCount] = useState(0);
   const [rr, setRR] = useState<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countRef = useRef(0);
 
   function startCount() {
+    countRef.current = 0;
     setCount(0);
     setPhase('counting');
     timerRef.current = setTimeout(() => {
-      setRR(count);
+      setRR(countRef.current);
       setPhase('result');
+      updateAssessment({ restingRR: countRef.current });
     }, 60000);
   }
 
   function tap() {
-    setCount(c => c + 1);
+    countRef.current += 1;
+    setCount(countRef.current);
   }
 
   function finishEarly() {
     if (timerRef.current) clearTimeout(timerRef.current);
-    setRR(count);
+    setRR(countRef.current);
     setPhase('result');
-    updateAssessment({ restingRR: count });
+    updateAssessment({ restingRR: countRef.current });
   }
 
   function saveAndContinue() {
