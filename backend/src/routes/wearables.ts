@@ -2,6 +2,8 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { normaliseMetric } from '../engines/normalisationLayer';
+import type { MetricSource } from '../types';
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -132,12 +134,87 @@ router.post('/disconnect', requireAuth, async (req: AuthRequest, res: Response) 
   res.json({ disconnected: true });
 });
 
-// Terra API webhook endpoint for normalised data ingestion
+// Terra API webhook — normalises and persists wearable metrics
 router.post('/terra/webhook', async (req: AuthRequest, res: Response) => {
-  const { user, type, data } = req.body;
-  // In production, verify Terra webhook signature here
-  console.log(`Terra webhook: user=${user?.user_id}, type=${type}`);
-  res.json({ received: true });
+  const { user: terraUser, type, data } = req.body;
+
+  // Terra sends data.body for activity/daily/sleep payloads
+  const payload = data?.body ?? data;
+  if (!terraUser?.user_id || !Array.isArray(payload)) {
+    res.json({ received: true, processed: 0 });
+    return;
+  }
+
+  // Look up which user owns this terra user_id
+  const wearable = await prisma.wearableConnection.findFirst({
+    where: { accessToken: terraUser.user_id },
+  });
+  if (!wearable) {
+    res.json({ received: true, processed: 0, reason: 'no_matching_user' });
+    return;
+  }
+
+  const userId = wearable.userId;
+  const source = wearable.deviceType as MetricSource;
+
+  // Map Terra data types to raw metrics
+  const rawMetrics: Array<{ type: string; value?: number; systolic?: number; diastolic?: number; timestamp?: string }> = [];
+
+  for (const sample of payload) {
+    if (type === 'daily' || type === 'sleep') {
+      if (sample.heart_rate_data?.summary?.avg_hrv_rmssd !== undefined) {
+        rawMetrics.push({ type: 'rmssd_hrv', value: sample.heart_rate_data.summary.avg_hrv_rmssd, timestamp: sample.metadata?.start_time });
+      }
+      if (sample.heart_rate_data?.summary?.resting_hr_bpm !== undefined) {
+        rawMetrics.push({ type: 'resting_heart_rate', value: sample.heart_rate_data.summary.resting_hr_bpm, timestamp: sample.metadata?.start_time });
+      }
+      if (sample.oxygen_data?.avg_saturation_percentage !== undefined) {
+        rawMetrics.push({ type: 'spo2', value: sample.oxygen_data.avg_saturation_percentage, timestamp: sample.metadata?.start_time });
+      }
+      if (sample.respiration_data?.avg_breaths_per_min !== undefined) {
+        rawMetrics.push({ type: 'respiratory_rate', value: sample.respiration_data.avg_breaths_per_min, timestamp: sample.metadata?.start_time });
+      }
+    }
+    if (type === 'body') {
+      if (sample.blood_pressure_data?.avg_systolic_mmhg !== undefined) {
+        rawMetrics.push({
+          type: 'blood_pressure',
+          value: sample.blood_pressure_data.avg_systolic_mmhg,
+          systolic: sample.blood_pressure_data.avg_systolic_mmhg,
+          diastolic: sample.blood_pressure_data.avg_diastolic_mmhg,
+          timestamp: sample.metadata?.start_time,
+        });
+      }
+    }
+  }
+
+  let processed = 0;
+  const entries = [];
+  for (const raw of rawMetrics) {
+    const normalised = normaliseMetric({ source, ...raw });
+    if (normalised) {
+      entries.push({
+        userId,
+        type: normalised.type,
+        value: normalised.value,
+        systolic: normalised.systolic,
+        diastolic: normalised.diastolic,
+        source: normalised.source,
+        recordedAt: normalised.recordedAt,
+      });
+      processed++;
+    }
+  }
+
+  if (entries.length > 0) {
+    await prisma.metricEntry.createMany({ data: entries as any });
+    await prisma.wearableConnection.update({
+      where: { id: wearable.id },
+      data: { lastSyncedAt: new Date() },
+    });
+  }
+
+  res.json({ received: true, processed });
 });
 
 export default router;

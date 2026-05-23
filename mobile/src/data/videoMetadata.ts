@@ -1,5 +1,5 @@
 // Local metadata for session player — maps videoId to technique and display info
-export const VIDEO_METADATA: Record<string, { title: string; pillar: string; technique: string; durationSeconds: number }> = {
+export const VIDEO_METADATA: Record<string, { title: string; pillar: string; technique: string; durationSeconds: number; videoUrl?: string }> = {
   default: { title: 'Breathing Session', pillar: 'neurophysiology', technique: 'default', durationSeconds: 600 },
   'BC-01': { title: 'Diaphragmatic Breathing Foundations', pillar: 'biomechanics', technique: 'diaphragmatic_activation', durationSeconds: 600 },
   'BC-02': { title: '3D Ribcage Expansion', pillar: 'biomechanics', technique: '3d_ribcage', durationSeconds: 720 },

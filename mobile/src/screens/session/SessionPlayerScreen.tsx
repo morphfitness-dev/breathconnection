@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
@@ -45,21 +46,24 @@ export function SessionPlayerScreen({ navigation, route }: Props) {
   const videoMeta = VIDEO_METADATA[videoId] ?? VIDEO_METADATA.default;
   const pattern = PATTERNS[videoMeta.technique] ?? PATTERNS.default;
   const pillarConfig = PILLAR_CONFIG[videoMeta.pillar as keyof typeof PILLAR_CONFIG] ?? PILLAR_CONFIG.neurophysiology;
+  const hasVideoUrl = !!videoMeta.videoUrl;
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [phase, setPhase] = useState<'ready' | 'active' | 'paused' | 'complete'>('ready');
   const [breathPhase, setBreathPhase] = useState<BreathPhase>('idle');
   const [elapsed, setElapsed] = useState(0);
-  const [targetDuration] = useState((today?.session?.durationMinutes ?? 10) * 60);
+  const [targetDuration] = useState((today?.session?.durationMinutes ?? videoMeta.durationSeconds / 60) * 60);
   const [cycleCount, setCycleCount] = useState(0);
   const [subjectiveRating, setSubjectiveRating] = useState<number | null>(null);
-  const [holdDuration, setHoldDuration] = useState(0);
   const [maxHold, setMaxHold] = useState(0);
   const [holdActive, setHoldActive] = useState(false);
+  const [videoPacerVisible, setVideoPacerVisible] = useState(false);
+
   const holdRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cycleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startTimeRef = useRef<number>(0);
+  const videoRef = useRef<Video>(null);
 
   useEffect(() => {
     initSession();
@@ -77,16 +81,13 @@ export function SessionPlayerScreen({ navigation, route }: Props) {
     } catch {}
   }
 
-  function startBreathing() {
-    setPhase('active');
+  function startTimer() {
     startTimeRef.current = Date.now();
-
     intervalRef.current = setInterval(() => {
       const e = Math.floor((Date.now() - startTimeRef.current) / 1000);
       setElapsed(e);
       if (holdActive) {
         holdRef.current += 1;
-        setHoldDuration(holdRef.current);
         if (holdRef.current > maxHold) setMaxHold(holdRef.current);
       }
       if (e >= targetDuration) {
@@ -95,8 +96,15 @@ export function SessionPlayerScreen({ navigation, route }: Props) {
         setBreathPhase('idle');
       }
     }, 1000);
+  }
 
-    runCycle();
+  function startBreathing() {
+    setPhase('active');
+    if (hasVideoUrl) {
+      videoRef.current?.playAsync();
+    }
+    startTimer();
+    if (!hasVideoUrl) runCycle();
   }
 
   function runCycle() {
@@ -119,14 +127,11 @@ export function SessionPlayerScreen({ navigation, route }: Props) {
       setBreathPhase('exhale');
       setHoldActive(false);
       holdRef.current = 0;
-      setHoldDuration(0);
     }, offset);
     offset += exhale * 1000;
 
     if (holdOut > 0) {
-      cycleRef.current = setTimeout(() => {
-        setBreathPhase('hold_out');
-      }, offset);
+      cycleRef.current = setTimeout(() => setBreathPhase('hold_out'), offset);
       offset += holdOut * 1000;
     }
 
@@ -142,6 +147,7 @@ export function SessionPlayerScreen({ navigation, route }: Props) {
     setPhase('paused');
     setBreathPhase('idle');
     setHoldActive(false);
+    videoRef.current?.pauseAsync();
   }
 
   function resume() {
@@ -151,14 +157,22 @@ export function SessionPlayerScreen({ navigation, route }: Props) {
       const e = Math.floor((Date.now() - startTimeRef.current) / 1000);
       setElapsed(e);
     }, 1000);
-    runCycle();
+    videoRef.current?.playAsync();
+    if (!hasVideoUrl) runCycle();
   }
 
   function reportDiscomfort() {
     setHoldActive(false);
     setBreathPhase('exhale');
-    Alert.alert('Hold ended', 'Hold ended. Breathe gently. Hold target reduced for rest of session.');
+    Alert.alert('Hold ended', 'Breathe gently. Hold target reduced for rest of session.');
   }
+
+  const onVideoPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
+    if (!status.isLoaded) return;
+    if (status.didJustFinish) {
+      setPhase('complete');
+    }
+  }, []);
 
   async function finishSession() {
     if (!sessionId) return;
@@ -167,7 +181,6 @@ export function SessionPlayerScreen({ navigation, route }: Props) {
       durationSeconds: elapsed,
       subjectiveRating: subjectiveRating ?? undefined,
     };
-
     if (maxHold > 5) payload.holdDurationSeconds = maxHold;
 
     try {
@@ -220,98 +233,119 @@ export function SessionPlayerScreen({ navigation, route }: Props) {
   }
 
   return (
-    <LinearGradient colors={[COLORS.bg, '#0A0E1A']} style={styles.fill}>
-      <SafeAreaView style={styles.fill}>
-        {/* Header */}
-        <View style={styles.sessionHeader}>
-          <TouchableOpacity onPress={() => { pause(); navigation.goBack(); }}>
-            <Text style={styles.exitButton}>✕</Text>
-          </TouchableOpacity>
-          <View style={styles.sessionInfo}>
-            <Text style={[styles.sessionPillar, { color: pillarConfig.color }]}>
-              {videoMeta.pillar?.toUpperCase() ?? ''}
-            </Text>
-            <Text style={styles.sessionTitle} numberOfLines={1}>{videoMeta.title}</Text>
-          </View>
-          <Text style={styles.timerText}>
-            {remainingMins}:{remainingSecs.toString().padStart(2, '0')}
-          </Text>
-        </View>
+    <View style={styles.fill}>
+      {/* Video background (when videoUrl available) */}
+      {hasVideoUrl && (
+        <Video
+          ref={videoRef}
+          source={{ uri: videoMeta.videoUrl! }}
+          style={StyleSheet.absoluteFill}
+          resizeMode={ResizeMode.COVER}
+          shouldPlay={false}
+          isLooping={false}
+          onPlaybackStatusUpdate={onVideoPlaybackStatusUpdate}
+        />
+      )}
 
-        {/* Progress bar */}
-        <View style={styles.sessionProgress}>
-          <View style={[styles.sessionProgressFill, { width: `${progress * 100}%` as any, backgroundColor: pillarConfig.color }]} />
-        </View>
+      {/* Dark overlay for readability */}
+      {hasVideoUrl && <View style={styles.videoOverlay} />}
 
-        {/* Pattern info */}
-        <View style={styles.patternBadge}>
-          <Text style={styles.patternName}>{pattern.name}</Text>
-          <Text style={styles.patternTiming}>
-            {pattern.inhale}s in {pattern.holdIn > 0 ? `· ${pattern.holdIn}s hold · ` : '· '}
-            {pattern.exhale}s out{pattern.holdOut > 0 ? ` · ${pattern.holdOut}s hold` : ''}
-          </Text>
-        </View>
-
-        {/* Breathing circle */}
-        <View style={styles.circleContainer}>
-          {phase !== 'ready' ? (
-            <BreathingCircle
-              phase={breathPhase}
-              durationSeconds={targetDuration}
-              inhaleSeconds={pattern.inhale}
-              exhaleSeconds={pattern.exhale}
-              holdInSeconds={pattern.holdIn}
-              holdOutSeconds={pattern.holdOut}
-              color={pillarConfig.color}
-              size={240}
-            />
-          ) : (
-            <View style={styles.readyCircle}>
-              <Text style={styles.readyText}>Ready</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Cycle counter */}
-        {cycleCount > 0 && (
-          <Text style={styles.cycleCount}>{cycleCount} cycles</Text>
-        )}
-
-        {/* Controls */}
-        <View style={styles.controls}>
-          {phase === 'ready' && (
-            <TouchableOpacity style={[styles.mainButton, { backgroundColor: pillarConfig.color }]} onPress={startBreathing}>
-              <Text style={styles.mainButtonText}>Begin</Text>
+      <LinearGradient
+        colors={hasVideoUrl ? ['transparent', COLORS.bg + 'CC'] : [COLORS.bg, '#0A0E1A']}
+        style={styles.fill}
+      >
+        <SafeAreaView style={styles.fill}>
+          {/* Header */}
+          <View style={styles.sessionHeader}>
+            <TouchableOpacity onPress={() => { pause(); navigation.goBack(); }}>
+              <Text style={styles.exitButton}>✕</Text>
             </TouchableOpacity>
-          )}
-          {phase === 'active' && (
-            <View style={styles.activeControls}>
-              <TouchableOpacity style={styles.discomfortButton} onPress={reportDiscomfort}>
-                <Text style={styles.discomfortButtonText}>Discomfort</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.pauseButton} onPress={pause}>
-                <Text style={styles.pauseButtonText}>⏸</Text>
-              </TouchableOpacity>
+            <View style={styles.sessionInfo}>
+              <Text style={[styles.sessionPillar, { color: pillarConfig.color }]}>
+                {videoMeta.pillar?.toUpperCase() ?? ''}
+              </Text>
+              <Text style={styles.sessionTitle} numberOfLines={1}>{videoMeta.title}</Text>
             </View>
+            <Text style={styles.timerText}>
+              {remainingMins}:{remainingSecs.toString().padStart(2, '0')}
+            </Text>
+          </View>
+
+          {/* Progress bar */}
+          <View style={styles.sessionProgress}>
+            <View style={[styles.sessionProgressFill, { width: `${progress * 100}%` as any, backgroundColor: pillarConfig.color }]} />
+          </View>
+
+          {/* Pattern info — always visible, helps with video too */}
+          <View style={styles.patternBadge}>
+            <Text style={styles.patternName}>{pattern.name}</Text>
+            <Text style={styles.patternTiming}>
+              {pattern.inhale}s in {pattern.holdIn > 0 ? `· ${pattern.holdIn}s hold · ` : '· '}
+              {pattern.exhale}s out{pattern.holdOut > 0 ? ` · ${pattern.holdOut}s hold` : ''}
+            </Text>
+          </View>
+
+          {/* Breathing circle — always visible; overlays video */}
+          <View style={styles.circleContainer}>
+            {phase !== 'ready' ? (
+              <BreathingCircle
+                phase={breathPhase}
+                durationSeconds={targetDuration}
+                inhaleSeconds={pattern.inhale}
+                exhaleSeconds={pattern.exhale}
+                holdInSeconds={pattern.holdIn}
+                holdOutSeconds={pattern.holdOut}
+                color={pillarConfig.color}
+                size={hasVideoUrl ? 180 : 240}
+              />
+            ) : (
+              <View style={styles.readyCircle}>
+                <Text style={styles.readyText}>Ready</Text>
+              </View>
+            )}
+          </View>
+
+          {cycleCount > 0 && !hasVideoUrl && (
+            <Text style={styles.cycleCount}>{cycleCount} cycles</Text>
           )}
-          {phase === 'paused' && (
-            <View style={styles.pausedControls}>
-              <TouchableOpacity style={[styles.mainButton, { backgroundColor: pillarConfig.color }]} onPress={resume}>
-                <Text style={styles.mainButtonText}>Resume</Text>
+
+          {/* Controls */}
+          <View style={styles.controls}>
+            {phase === 'ready' && (
+              <TouchableOpacity style={[styles.mainButton, { backgroundColor: pillarConfig.color }]} onPress={startBreathing}>
+                <Text style={styles.mainButtonText}>Begin</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.endButton} onPress={() => setPhase('complete')}>
-                <Text style={styles.endButtonText}>End Session</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </SafeAreaView>
-    </LinearGradient>
+            )}
+            {phase === 'active' && (
+              <View style={styles.activeControls}>
+                <TouchableOpacity style={styles.discomfortButton} onPress={reportDiscomfort}>
+                  <Text style={styles.discomfortButtonText}>Discomfort</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.pauseButton} onPress={pause}>
+                  <Text style={styles.pauseButtonText}>⏸</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            {phase === 'paused' && (
+              <View style={styles.pausedControls}>
+                <TouchableOpacity style={[styles.mainButton, { backgroundColor: pillarConfig.color }]} onPress={resume}>
+                  <Text style={styles.mainButtonText}>Resume</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.endButton} onPress={() => setPhase('complete')}>
+                  <Text style={styles.endButtonText}>End Session</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  videoOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(10,14,26,0.55)' },
   sessionHeader: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, gap: SPACING.md },
   exitButton: { color: COLORS.textMuted, fontSize: 20, padding: SPACING.xs },
   sessionInfo: { flex: 1 },
@@ -331,9 +365,9 @@ const styles = StyleSheet.create({
   mainButton: { borderRadius: 16, padding: 18, alignItems: 'center' },
   mainButtonText: { color: '#fff', fontSize: 18, fontWeight: '700', letterSpacing: 0.5 },
   activeControls: { flexDirection: 'row', gap: SPACING.md },
-  discomfortButton: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
+  discomfortButton: { flex: 1, backgroundColor: COLORS.bgCard + 'CC', borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
   discomfortButtonText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: '600' },
-  pauseButton: { backgroundColor: COLORS.bgCard, borderRadius: 14, padding: 14, paddingHorizontal: 20, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
+  pauseButton: { backgroundColor: COLORS.bgCard + 'CC', borderRadius: 14, padding: 14, paddingHorizontal: 20, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
   pauseButtonText: { fontSize: 18 },
   pausedControls: { gap: SPACING.md },
   endButton: { alignItems: 'center', padding: 12 },

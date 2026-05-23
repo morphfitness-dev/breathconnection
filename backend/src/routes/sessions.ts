@@ -224,6 +224,31 @@ router.post('/complete', requireAuth, async (req: AuthRequest, res: Response) =>
     }
   }
 
+  // Daily practice streak — one increment per calendar day
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+  const practiceStreak = await prisma.streakEntry.findFirst({
+    where: { userId, type: 'daily_practice', isActive: true },
+    orderBy: { startedAt: 'desc' },
+  });
+  const lastPractice = practiceStreak?.lastUpdatedAt ?? null;
+  const alreadyLoggedToday = lastPractice && lastPractice >= todayMidnight;
+  if (!alreadyLoggedToday) {
+    const yesterday = new Date(todayMidnight.getTime() - 86_400_000);
+    const isConsecutive = lastPractice && lastPractice >= yesterday;
+    if (practiceStreak && isConsecutive) {
+      await prisma.streakEntry.update({
+        where: { id: practiceStreak.id },
+        data: { count: { increment: 1 }, lastUpdatedAt: new Date() },
+      });
+    } else if (practiceStreak && !isConsecutive) {
+      await prisma.streakEntry.update({ where: { id: practiceStreak.id }, data: { isActive: false } });
+      await prisma.streakEntry.create({ data: { userId, type: 'daily_practice', count: 1 } });
+    } else {
+      await prisma.streakEntry.create({ data: { userId, type: 'daily_practice', count: 1 } });
+    }
+  }
+
   // Handle coherence streak
   const postEvents = applyPostSessionSignals(session.preHrv ?? undefined, postHrv, eegAlphaRatio, userId);
   if (postEvents.coherence_achieved) {
