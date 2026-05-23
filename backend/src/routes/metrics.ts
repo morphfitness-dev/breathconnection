@@ -4,12 +4,13 @@ import { PrismaClient } from '@prisma/client';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { normaliseMetric, calculate7DayAverage, detectBiometricAlerts, isBPSafe, getBPSourceLabel } from '../engines/normalisationLayer';
 import { interpretNSScore } from '../engines/nsScoreEngine';
+import { checkBoltMilestones } from '../engines/gamificationEngine';
 
 const prisma = new PrismaClient();
 const router = Router();
 
 const metricSchema = z.object({
-  type: z.enum(['hrv', 'rhr', 'rr', 'spo2', 'blood_pressure', 'ns_score', 'eeg_alpha', 'daytime_rr']),
+  type: z.enum(['hrv', 'rhr', 'rr', 'spo2', 'blood_pressure', 'ns_score', 'eeg_alpha', 'daytime_rr', 'bolt']),
   value: z.number(),
   systolic: z.number().optional(),
   diastolic: z.number().optional(),
@@ -52,11 +53,25 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
 
   const alerts = detectBiometricAlerts([{ type, value, recordedAt: new Date() }]);
 
+  // BOLT score — also persist to BoltScore model and check milestones
+  let boltMilestones: Array<{ type: string; data: Record<string, unknown> }> = [];
+  if (type === 'bolt') {
+    const prevBolt = await prisma.boltScore.findFirst({ where: { userId }, orderBy: { testedAt: 'desc' } });
+    const isPR = !prevBolt || value > prevBolt.score;
+    await prisma.boltScore.create({ data: { userId, score: value, isPersonalRecord: isPR } });
+    const triggers = checkBoltMilestones(prevBolt?.score ?? null, value);
+    for (const t of triggers) {
+      boltMilestones.push({ type: t.type, data: t.data });
+      await prisma.userMilestone.create({ data: { userId, milestoneType: t.type, data: JSON.stringify(t.data) } });
+    }
+  }
+
   res.status(201).json({
     entry,
     bpLabel: type === 'blood_pressure' ? getBPSourceLabel(source) : undefined,
     bpWarning,
     alerts,
+    boltMilestones: boltMilestones.length > 0 ? boltMilestones : undefined,
   });
 });
 

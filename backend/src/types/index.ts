@@ -4,7 +4,7 @@ export type InstructorStyle = 'warm' | 'clinical' | 'energising' | 'calm';
 export type WearableType = 'oura' | 'whoop' | 'apple_health' | 'google_health' | 'muse' | 'flowtime' | 'tymewear' | 'spire' | 'hilo';
 export type BiometricFeedbackType = 'hrv' | 'eeg' | 'breathing_rate' | 'spO2' | 'blood_pressure' | 'none';
 export type GamificationEvent = 'bolt_pr_test' | 'hold_pr' | 'coherence_session' | 'pillar_complete' | 'milestone_none';
-export type MetricType = 'hrv' | 'rhr' | 'rr' | 'spo2' | 'blood_pressure' | 'ns_score' | 'eeg_alpha' | 'daytime_rr';
+export type MetricType = 'hrv' | 'rhr' | 'rr' | 'spo2' | 'blood_pressure' | 'ns_score' | 'eeg_alpha' | 'daytime_rr' | 'bolt';
 export type MetricSource = 'manual' | 'oura' | 'whoop' | 'apple_health' | 'tymewear' | 'spire';
 
 export interface PillarWeights {

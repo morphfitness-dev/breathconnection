@@ -10,7 +10,7 @@ interface Props {
   navigation: NativeStackNavigationProp<any>;
 }
 
-type MetricType = 'hrv' | 'rhr' | 'rr' | 'spo2';
+type MetricType = 'hrv' | 'rhr' | 'rr' | 'spo2' | 'bolt';
 
 const METRIC_CONFIG: Record<MetricType, { label: string; unit: string; color: string; placeholder: string; min: number; max: number; description: string; tip: string }> = {
   hrv: {
@@ -37,6 +37,12 @@ const METRIC_CONFIG: Record<MetricType, { label: string; unit: string; color: st
     description: 'Peripheral blood oxygen saturation — resting baseline and post-hold measurements.',
     tip: 'Use a pulse oximeter on your finger. Rest for 2 minutes before measuring.',
   },
+  bolt: {
+    label: 'BOLT Score', unit: 'seconds', color: COLORS.biochemistry, placeholder: '25',
+    min: 0, max: 120,
+    description: 'Body Oxygen Level Test — measures CO₂ tolerance. Retake weekly to track your biochemistry progress.',
+    tip: 'After a relaxed exhale, pinch your nose and time until the first definite urge to breathe. Do NOT force it to discomfort.',
+  },
 };
 
 export function MetricEntryScreen({ navigation }: Props) {
@@ -55,10 +61,14 @@ export function MetricEntryScreen({ navigation }: Props) {
     }
     setSaving(true);
     try {
-      await logMetric({ type: activeType, value: num, source: 'manual', context: 'morning' });
+      const result = await logMetric({ type: activeType, value: num, source: 'manual', context: 'morning' });
       setRecentEntries(prev => [{ type: activeType, value: num, savedAt: new Date().toLocaleTimeString() }, ...prev.slice(0, 4)]);
       setValue('');
-      Alert.alert('Saved', `${config.label}: ${num} ${config.unit.split(' ')[0]}`);
+      if (result.boltMilestones?.length > 0) {
+        Alert.alert('Milestone!', result.boltMilestones.map((m: any) => m.type.replace(/_/g, ' ')).join('\n'));
+      } else {
+        Alert.alert('Saved', `${config.label}: ${num} ${config.unit.split(' ')[0]}`);
+      }
     } catch {
       Alert.alert('Error', 'Could not save metric.');
     } finally {
@@ -79,7 +89,7 @@ export function MetricEntryScreen({ navigation }: Props) {
 
           {/* Metric type selector */}
           <View style={styles.typeGrid}>
-            {(Object.keys(METRIC_CONFIG) as MetricType[]).map(t => {
+            {(['hrv', 'rhr', 'rr', 'spo2', 'bolt'] as MetricType[]).map(t => {
               const c = METRIC_CONFIG[t];
               return (
                 <TouchableOpacity
@@ -158,6 +168,13 @@ export function MetricEntryScreen({ navigation }: Props) {
 
 function getRanges(type: MetricType) {
   const map: Record<MetricType, Array<{ range: string; label: string; color: string }>> = {
+    bolt: [
+      { range: '< 10s', label: 'Significant breathing dysfunction', color: COLORS.error },
+      { range: '10–20s', label: 'Below average — focus on nasal habits', color: COLORS.warning },
+      { range: '20–30s', label: 'Moderate — building tolerance', color: '#FFD54F' },
+      { range: '30–40s', label: 'Good — healthy baseline', color: COLORS.success },
+      { range: '> 40s', label: 'Excellent — elite CO₂ tolerance', color: COLORS.biochemistry },
+    ],
     hrv: [
       { range: '< 20ms', label: 'Very low — chronic stress or fatigue', color: COLORS.error },
       { range: '20–40ms', label: 'Low — below average', color: COLORS.warning },

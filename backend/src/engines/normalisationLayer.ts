@@ -67,6 +67,7 @@ function isValueInRange(type: MetricType, value: number): boolean {
     ns_score: [0, 100],
     eeg_alpha: [0, 100],
     daytime_rr: [2, 60],
+    bolt: [0, 120],
   };
   const [min, max] = ranges[type];
   return value >= min && value <= max;
