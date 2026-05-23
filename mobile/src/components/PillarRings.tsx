@@ -60,11 +60,11 @@ export function PillarRings({ biomechanics, biochemistry, neurophysiology, size 
 
   return (
     <View style={styles.container}>
-      {rings.map(({ key, progress, color, label }) => (
+      {rings.map(({ key, progress, color, shortLabel }) => (
         <View key={key} style={styles.ringItem}>
           <Ring progress={progress} color={color} size={ringSize} strokeWidth={strokeWidth} />
           {size === 'large' && (
-            <Text style={[styles.label, { color }]}>{label.split('o')[0]}</Text>
+            <Text style={[styles.label, { color }]}>{shortLabel}</Text>
           )}
         </View>
       ))}

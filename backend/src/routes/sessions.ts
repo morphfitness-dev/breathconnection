@@ -59,16 +59,23 @@ router.get('/today', requireAuth, async (req: AuthRequest, res: Response) => {
 
   const video = VIDEO_LIBRARY.find(v => v.id === adapted.videoId);
 
-  // Save NS score
-  await prisma.metricEntry.create({
-    data: {
-      userId,
-      type: 'ns_score',
-      value: nsScoreResult.score,
-      source: 'manual',
-      context: 'morning',
-    },
+  // Save NS score — only once per day to avoid spam from refreshes
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const existingNsToday = await prisma.metricEntry.findFirst({
+    where: { userId, type: 'ns_score', recordedAt: { gte: todayStart } },
   });
+  if (!existingNsToday) {
+    await prisma.metricEntry.create({
+      data: {
+        userId,
+        type: 'ns_score',
+        value: nsScoreResult.score,
+        source: 'manual',
+        context: 'morning',
+      },
+    });
+  }
 
   res.json({
     nsScore: nsScoreResult,

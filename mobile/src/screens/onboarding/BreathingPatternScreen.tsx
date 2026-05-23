@@ -50,7 +50,7 @@ export function BreathingPatternScreen({ navigation }: Props) {
             <View style={styles.progressBar}><View style={[styles.progressFill, { width: '37.5%' }]} /></View>
           </View>
 
-          <Text style={styles.title}>Breathing Pattern Screen</Text>
+          <Text style={styles.title}>Breathing Pattern Self-Test</Text>
           <Text style={styles.subtitle}>Identify your dominant breathing pattern</Text>
 
           {phase === 'test' && (

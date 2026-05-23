@@ -62,18 +62,21 @@ export const PILLAR_CONFIG = {
   biomechanics: {
     color: COLORS.biomechanics,
     label: 'Biomechanics',
+    shortLabel: 'Mech',
     subtitle: 'How You Breathe',
     emoji: '🫁',
   },
   biochemistry: {
     color: COLORS.biochemistry,
     label: 'Biochemistry',
+    shortLabel: 'Chem',
     subtitle: 'What Your Breath Does',
     emoji: '🧬',
   },
   neurophysiology: {
     color: COLORS.neurophysiology,
     label: 'Neurophysiology',
+    shortLabel: 'Neuro',
     subtitle: 'Your Nervous System',
     emoji: '⚡',
   },

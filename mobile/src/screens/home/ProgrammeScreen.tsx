@@ -82,7 +82,7 @@ export function ProgrammeScreen({ navigation }: Props) {
                     return (
                       <View key={p} style={styles.weightItem}>
                         <Text style={[styles.weightPct, { color: config.color }]}>{w}%</Text>
-                        <Text style={[styles.weightLabel, { color: config.color }]}>{config.label.split('o')[0]}</Text>
+                        <Text style={[styles.weightLabel, { color: config.color }]}>{config.shortLabel}</Text>
                       </View>
                     );
                   })}
