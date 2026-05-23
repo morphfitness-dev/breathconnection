@@ -29,5 +29,4 @@ export const VIDEO_METADATA: Record<string, { title: string; pillar: string; tec
   'NP-09': { title: 'Restorative Breathing', pillar: 'neurophysiology', technique: 'restorative', durationSeconds: 300 },
   'NP-10': { title: 'Coherent Breathing — 6-6', pillar: 'neurophysiology', technique: 'coherent_6_6', durationSeconds: 720 },
   'NP-11': { title: 'Advanced Coherent Breathing — 8-8', pillar: 'neurophysiology', technique: 'coherent_8_8', durationSeconds: 1200 },
-  default: { title: 'Breathing Session', pillar: 'neurophysiology', technique: 'default', durationSeconds: 600 },
 };

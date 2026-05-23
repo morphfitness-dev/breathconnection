@@ -24,7 +24,7 @@ export function ProgrammeGenerationScreen({ navigation }: Props) {
 
   async function generate() {
     try {
-      const data = await submitAssessment(assessment);
+      const data = await submitAssessment(assessment as Record<string, unknown>);
       setResult(data);
       setPhase('done');
     } catch (e: any) {
