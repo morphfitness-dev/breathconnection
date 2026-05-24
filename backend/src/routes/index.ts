@@ -8,6 +8,7 @@ import wearablesRoutes from './wearables';
 import gamificationRoutes from './gamification';
 import checkinRoutes from './checkin';
 import reportsRoutes from './reports';
+import videosRoutes from './videos';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/wearables', wearablesRoutes);
 router.use('/gamification', gamificationRoutes);
 router.use('/checkin', checkinRoutes);
 router.use('/reports', reportsRoutes);
+router.use('/videos', videosRoutes);
 
 export default router;
