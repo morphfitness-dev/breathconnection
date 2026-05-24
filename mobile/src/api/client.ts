@@ -1,6 +1,10 @@
 import axios from 'axios';
+import Constants from 'expo-constants';
 
-const BASE_URL = __DEV__ ? 'http://localhost:3000/api' : 'https://api.breathconnection.com/api';
+const extra = Constants.expoConfig?.extra ?? {};
+const BASE_URL = __DEV__
+  ? (extra.apiUrlDev ?? 'http://localhost:3000/api')
+  : (extra.apiUrlProd ?? 'https://api.breathconnection.com/api');
 
 export const api = axios.create({
   baseURL: BASE_URL,

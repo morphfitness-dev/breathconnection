@@ -3,10 +3,15 @@
     "name": "The Breath Connection",
     "slug": "breathconnection",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
       "backgroundColor": "#0A0E1A"
     },
     "assetBundlePatterns": [
@@ -15,22 +20,68 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.breathconnection.app",
+      "buildNumber": "1",
+      "requireFullScreen": true,
       "infoPlist": {
         "NSHealthShareUsageDescription": "The Breath Connection reads HRV, heart rate, and breathing data to personalise your programme.",
         "NSHealthUpdateUsageDescription": "The Breath Connection writes session data to Apple Health.",
-        "NSCameraUsageDescription": "Used for breathing rate measurement via camera rPPG."
+        "NSCameraUsageDescription": "Used for breathing rate measurement via camera rPPG.",
+        "UIBackgroundModes": ["audio", "fetch", "remote-notification"]
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": []
       }
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A0E1A"
       },
-      "package": "com.breathconnection.app"
+      "package": "com.breathconnection.app",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "android.permission.HEALTH_CONNECT_READ_DATA",
+        "android.permission.HEALTH_CONNECT_WRITE_DATA"
+      ],
+      "googleServicesFile": "./google-services.json"
     },
-    "plugins": [],
+    "plugins": [
+      "expo-av",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4F9DFF",
+          "sounds": []
+        }
+      ]
+    ],
+    "notification": {
+      "icon": "./assets/icon.png",
+      "color": "#4F9DFF",
+      "androidMode": "default"
+    },
     "web": {
       "bundler": "metro",
-      "output": "single"
+      "output": "single",
+      "favicon": "./assets/icon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_YOUR_EAS_PROJECT_ID"
+      },
+      "apiUrlProd": "https://api.breathconnection.com/api",
+      "apiUrlDev": "http://localhost:3000/api"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/REPLACE_WITH_YOUR_EAS_PROJECT_ID",
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "checkAutomatically": "ON_LOAD"
     }
   }
 }

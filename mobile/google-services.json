@@ -1,0 +1,25 @@
+{
+  "_comment": "Replace this file with the real google-services.json from Firebase Console (Project Settings → Your apps → Android app → Download google-services.json). Required for push notifications on Android.",
+  "project_info": {
+    "project_number": "REPLACE",
+    "project_id": "breathconnection-REPLACE",
+    "storage_bucket": "breathconnection-REPLACE.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "REPLACE",
+        "android_info": {
+          "package_name": "com.breathconnection.app"
+        }
+      },
+      "api_key": [{ "current_key": "REPLACE" }],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
