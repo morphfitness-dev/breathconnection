@@ -2,10 +2,15 @@
   "name": "@breathconnection/backend",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "ts-node prisma/seed.ts",

@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: breathconn
+      POSTGRES_PASSWORD: breathconn_dev_2024
+      POSTGRES_DB: breathconnection
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U breathconn -d breathconnection"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://breathconn:breathconn_dev_2024@postgres:5432/breathconnection
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      NODE_ENV: production
+      PORT: 3000
+      # Optional — leave blank to use local disk uploads
+      S3_BUCKET: ${S3_BUCKET:-}
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      CDN_BASE: ${CDN_BASE:-}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - api_uploads:/app/uploads
+
+volumes:
+  postgres_data:
+  api_uploads:
