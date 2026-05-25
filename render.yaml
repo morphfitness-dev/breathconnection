@@ -5,7 +5,7 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     region: oregon
-    plan: starter          # $7/mo — upgrade to standard for production SLAs
+    plan: free
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -17,8 +17,7 @@ services:
           name: breathconnection-db
           property: connectionString
       - key: JWT_SECRET
-        generateValue: true   # Render auto-generates a secure random value
-      # Video storage — fill in after provisioning S3/R2
+        generateValue: true
       - key: S3_BUCKET
         value: ""
       - key: AWS_REGION
@@ -35,4 +34,4 @@ databases:
     databaseName: breathconnection
     user: breathconn
     region: oregon
-    plan: starter            # Free 90-day trial, then $7/mo
+    plan: free
