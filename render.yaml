@@ -3,7 +3,7 @@ services:
     name: breathconnection-api
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerContext: .
     region: oregon
     plan: free
     healthCheckPath: /health
