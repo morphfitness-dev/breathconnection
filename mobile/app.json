@@ -47,18 +47,9 @@
         "android.permission.HEALTH_CONNECT_READ_DATA",
         "android.permission.HEALTH_CONNECT_WRITE_DATA"
       ],
-      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
-      "expo-av",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#4F9DFF",
-          "sounds": []
-        }
-      ]
+      "expo-av"
     ],
     "notification": {
       "icon": "./assets/icon.png",
