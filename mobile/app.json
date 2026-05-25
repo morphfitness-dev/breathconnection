@@ -71,17 +71,12 @@
       "favicon": "./assets/icon.png"
     },
     "extra": {
-      "eas": {
-        "projectId": "REPLACE_WITH_YOUR_EAS_PROJECT_ID"
-      },
-      "apiUrlProd": "https://api.breathconnection.com/api",
+      "eas": {},
+      "apiUrlProd": "https://breathconnection-api.onrender.com/api",
       "apiUrlDev": "http://localhost:3000/api"
     },
     "updates": {
-      "url": "https://u.expo.dev/REPLACE_WITH_YOUR_EAS_PROJECT_ID",
-      "enabled": true,
-      "fallbackToCacheTimeout": 0,
-      "checkAutomatically": "ON_LOAD"
+      "enabled": false
     }
   }
 }
