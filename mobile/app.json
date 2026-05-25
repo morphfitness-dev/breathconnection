@@ -49,7 +49,14 @@
       ],
     },
     "plugins": [
-      "expo-av"
+      "expo-av",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#4F9DFF"
+        }
+      ]
     ],
     "notification": {
       "icon": "./assets/icon.png",
