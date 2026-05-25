@@ -1,0 +1,396 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── USERS ───────────────────────────────────────────────────────────────────
+
+model User {
+  id         String    @id @default(cuid())
+  supabaseId String    @unique
+  email      String    @unique
+  name       String?
+  avatarUrl  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Onboarding state
+  onboardingComplete Boolean   @default(false)
+  currentStage       UserStage @default(EXPLORER)
+
+  // Safety flags — persist forever once set
+  hasCardiovascularCondition Boolean @default(false)
+  hasEpilepsy                Boolean @default(false)
+  hasRespiratoryCondition    Boolean @default(false)
+  isPregnant                 Boolean @default(false)
+  hasPanicDisorder           Boolean @default(false)
+  bpAbove140                 Boolean @default(false)
+  paradoxicalResponseFlagged Boolean @default(false)
+
+  // Programme
+  activeProgram   Program? @relation(fields: [activeProgramId], references: [id])
+  activeProgramId String?  @unique
+  pillarWeights   PillarWeights?
+
+  // Relations
+  sessions            Session[]
+  metrics             Metric[]
+  boltTests           BoltTest[]
+  holdRecords         HoldRecord[]
+  coherenceStreaks     CoherenceStreak[]
+  wearableConnections WearableConnection[]
+  monthlyReports      MonthlyReport[]
+  notifications       Notification[]
+  assessmentResponses AssessmentResponse[]
+}
+
+enum UserStage {
+  EXPLORER
+  PRACTITIONER
+  OPTIMIZER
+  COACH
+}
+
+// ─── PILLAR WEIGHTS ───────────────────────────────────────────────────────────
+
+model PillarWeights {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  biomechanics    Float
+  biochemistry    Float
+  neurophysiology Float
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ─── ASSESSMENT ───────────────────────────────────────────────────────────────
+
+model AssessmentResponse {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module     String
+  questionId String
+  response   Json
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ─── PROGRAMMES ───────────────────────────────────────────────────────────────
+
+model Program {
+  id            String  @id @default(cuid())
+  slug          String  @unique
+  name          String
+  description   String
+  durationWeeks Int
+  pillar        String?
+  user          User?
+
+  weeks    ProgramWeek[]
+  sessions Session[]
+}
+
+model ProgramWeek {
+  id            String  @id @default(cuid())
+  programId     String
+  program       Program @relation(fields: [programId], references: [id])
+  weekNumber    Int
+  title         String
+  primaryPillar String
+  focus         String
+  dailyMinutes  Int
+
+  days ProgramDay[]
+}
+
+model ProgramDay {
+  id        String      @id @default(cuid())
+  weekId    String
+  week      ProgramWeek @relation(fields: [weekId], references: [id])
+  dayNumber Int
+  exercises DayExercise[]
+}
+
+model DayExercise {
+  id              String     @id @default(cuid())
+  dayId           String
+  day             ProgramDay @relation(fields: [dayId], references: [id])
+  exerciseId      String
+  exercise        Exercise   @relation(fields: [exerciseId], references: [id])
+  order           Int
+  durationSeconds Int
+}
+
+// ─── EXERCISES & VIDEOS ───────────────────────────────────────────────────────
+
+model Exercise {
+  id              String          @id @default(cuid())
+  code            String          @unique
+  name            String
+  description     String
+  pillar          Pillar
+  tier            Int
+  durationSeconds Int
+  instructorStyle InstructorStyle
+
+  // Taxonomy tags
+  primaryGoal       String[]
+  contraindications String[]
+  breathHoldMax     Int     @default(0)
+  positionRequired  String
+
+  // Adaptive engine tags
+  biometricFeedbackType String[]
+  nervousSystemScoreMin Int     @default(0)
+  gamificationEvent     String?
+  fourWeekAnchor        Boolean @default(false)
+
+  // Video
+  video   Video?  @relation(fields: [videoId], references: [id])
+  videoId String? @unique
+
+  dayExercises     DayExercise[]
+  sessionExercises SessionExercise[]
+}
+
+enum Pillar {
+  BIOMECHANICS
+  BIOCHEMISTRY
+  NEUROPHYSIOLOGY
+  MULTI
+}
+
+enum InstructorStyle {
+  WARM
+  CLINICAL
+  ENERGISING
+  CALM
+}
+
+// ─── VIDEOS ───────────────────────────────────────────────────────────────────
+
+model Video {
+  id           String    @id @default(cuid())
+  exerciseCode String?
+  title        String
+  description  String?
+
+  // Mux data — populated after upload processing
+  muxAssetId      String?   @unique
+  muxPlaybackId   String?   @unique
+  muxStatus       MuxStatus @default(PENDING)
+  durationSeconds Int?
+  thumbnailUrl    String?
+
+  // Raw upload (Supabase Storage) — before Mux processing
+  rawStoragePath String?
+  rawStorageUrl  String?
+  fileSizeBytes  BigInt?
+  mimeType       String?
+
+  // Metadata
+  uploadedById String?
+  uploadedAt   DateTime  @default(now())
+  publishedAt  DateTime?
+  isPublished  Boolean   @default(false)
+
+  exercise Exercise?
+}
+
+enum MuxStatus {
+  PENDING
+  PROCESSING
+  READY
+  ERRORED
+}
+
+// ─── SESSIONS ─────────────────────────────────────────────────────────────────
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programId String?
+  program   Program? @relation(fields: [programId], references: [id])
+
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  durationSeconds Int?
+  isComplete      Boolean   @default(false)
+
+  // Pre-session context
+  nsScoreAtStart Float?
+  pillarFocus    Pillar?
+
+  // Post-session data
+  hrvDeltaMs       Float?
+  subjectiveRating Int?
+  userNotes        String?
+
+  // Coherence validation
+  coherenceAchieved Boolean @default(false)
+
+  exercises SessionExercise[]
+
+  @@index([userId])
+  @@index([startedAt])
+}
+
+model SessionExercise {
+  id         String   @id @default(cuid())
+  sessionId  String
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  order      Int
+  completedAt    DateTime?
+  maxHoldSeconds Int?
+}
+
+// ─── METRICS ──────────────────────────────────────────────────────────────────
+
+model Metric {
+  id         String     @id @default(cuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       MetricType
+  value      Float
+  unit       String
+  source     String
+  recordedAt DateTime
+  context    String?
+  notes      String?
+
+  @@index([userId, type, recordedAt])
+}
+
+enum MetricType {
+  HRV_RMSSD
+  RESTING_HR
+  RESPIRATORY_RATE
+  SPO2
+  BLOOD_PRESSURE_SYSTOLIC
+  BLOOD_PRESSURE_DIASTOLIC
+  NERVOUS_SYSTEM_SCORE
+  SUBJECTIVE_STRESS
+  SLEEP_QUALITY
+  DAYTIME_BREATHING
+}
+
+// ─── BOLT TESTS ───────────────────────────────────────────────────────────────
+
+model BoltTest {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seconds          Float
+  isPersonalRecord Boolean  @default(false)
+  testedAt         DateTime @default(now())
+  context          String?
+
+  @@index([userId, testedAt])
+}
+
+// ─── HOLD RECORDS ─────────────────────────────────────────────────────────────
+
+model HoldRecord {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId        String?
+  exerciseId       String?
+  durationSeconds  Float
+  isPersonalRecord Boolean  @default(false)
+  achievedAt       DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ─── COHERENCE STREAKS ────────────────────────────────────────────────────────
+
+model CoherenceStreak {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentCount    Int       @default(0)
+  longestCount    Int       @default(0)
+  lastValidatedAt DateTime?
+  hasWearable     Boolean
+
+  @@index([userId])
+}
+
+// ─── WEARABLE CONNECTIONS ─────────────────────────────────────────────────────
+
+model WearableConnection {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     WearableProvider
+  terraUserId  String?
+  accessToken  String?
+  refreshToken String?
+  connectedAt  DateTime         @default(now())
+  lastSyncAt   DateTime?
+  isActive     Boolean          @default(true)
+
+  @@unique([userId, provider])
+  @@index([userId])
+}
+
+enum WearableProvider {
+  OURA
+  WHOOP
+  GARMIN
+  APPLE_HEALTH
+  GOOGLE_HEALTH
+  WITHINGS
+  MANUAL
+}
+
+// ─── MONTHLY REPORTS ──────────────────────────────────────────────────────────
+
+model MonthlyReport {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportMonth DateTime
+  generatedAt DateTime @default(now())
+  isViewed    Boolean  @default(false)
+
+  boltStart     Float?
+  boltCurrent   Float?
+  hrvStart      Float?
+  hrvCurrent    Float?
+  rrStart       Float?
+  rrCurrent     Float?
+  sessionsTotal Int    @default(0)
+
+  techniqueEffectiveness Json?
+  shareableCardData      Json?
+
+  @@index([userId, reportMonth])
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  isRead    Boolean  @default(false)
+  actionUrl String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
