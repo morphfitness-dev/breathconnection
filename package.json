@@ -2,22 +2,9 @@
   "name": "breathconnection",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "backend",
-    "mobile"
-  ],
   "scripts": {
-    "dev:backend": "npm run dev --workspace=backend",
-    "dev:mobile": "npm run start --workspace=mobile",
-    "build:backend": "npm run build --workspace=backend",
-    "test:backend": "npm run test --workspace=backend"
-  },
-  "dependencies": {
-    "@expo/metro-runtime": "~3.2.3",
-    "expo-constants": "^56.0.15",
-    "expo-device": "^56.0.4",
-    "expo-notifications": "^56.0.13",
-    "react-dom": "^18.2.0",
-    "react-native-web": "^0.19.13"
+    "dev:backend": "cd backend && npm run dev",
+    "dev:mobile": "cd mobile && npm run start",
+    "build:backend": "cd backend && npm run build"
   }
 }
