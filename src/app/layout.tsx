@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import { TRPCReactProvider } from "@/lib/trpc/provider";
 
 const geist = Geist({
   variable: "--font-sans",
@@ -20,7 +21,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geist.variable} h-full antialiased`}>
-      <body className="min-h-full bg-[#F5F3EE] text-[#1C1C1A]">{children}</body>
+      <body className="min-h-full bg-[#F5F3EE] text-[#1C1C1A]">
+        <TRPCReactProvider>{children}</TRPCReactProvider>
+      </body>
     </html>
   );
 }
