@@ -4,6 +4,7 @@ import { createTRPCContext, createCallerFactory } from "@/server/trpc/init";
 import NSScoreCard from "@/components/home/NSScoreCard";
 import TodaySessionCard from "@/components/home/TodaySessionCard";
 import PillarRings from "@/components/home/PillarRings";
+import StageCard from "@/components/home/StageCard";
 import QuickAccessRow from "@/components/home/QuickAccessRow";
 import CheckInBanner from "./CheckInBanner";
 
@@ -78,6 +79,9 @@ export default async function HomePage() {
 
         {/* Pillar balance rings */}
         <PillarRings pillarRings={pillarRings} />
+
+        {/* Stage progress card */}
+        <StageCard />
 
         {/* Quick access row */}
         <div className="bg-white rounded-2xl shadow-sm border border-[#1D9E75]/10 p-6">

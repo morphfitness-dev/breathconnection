@@ -4,6 +4,8 @@ import { exerciseRouter } from "./exercise";
 import { assessmentRouter } from "./assessment";
 import { homeRouter } from "./home";
 import { sessionRouter } from "./session";
+import { gamificationRouter } from "./gamification";
+import { dashboardRouter } from "./dashboard";
 
 export const appRouter = router({
   video: videoRouter,
@@ -11,6 +13,8 @@ export const appRouter = router({
   assessment: assessmentRouter,
   home: homeRouter,
   session: sessionRouter,
+  gamification: gamificationRouter,
+  dashboard: dashboardRouter,
 });
 
 export type AppRouter = typeof appRouter;

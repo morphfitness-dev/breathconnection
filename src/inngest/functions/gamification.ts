@@ -1,51 +1,31 @@
 import { inngest } from "@/inngest/client";
 import { prisma } from "@/lib/prisma/client";
 import type { UserStage } from "@prisma/client";
+import {
+  detectBoltMilestones,
+  stageIndex,
+  nextStageAfter,
+  STAGE_REQUIREMENTS,
+  STAGE_BENEFITS,
+} from "./gamification-helpers";
 
-// ─── Milestone helpers ────────────────────────────────────────────────────────
-
-export const BOLT_MILESTONES = [15, 25, 35] as const;
-export type BoltMilestone = (typeof BOLT_MILESTONES)[number];
-
-/**
- * Returns which BOLT milestones are crossed for the first time by `newSeconds`
- * given the previous best (or null if no prior test).
- */
-export function detectBoltMilestones(
-  newSeconds: number,
-  previousBestSeconds: number | null
-): BoltMilestone[] {
-  return BOLT_MILESTONES.filter((m) => {
-    const previouslyBelow =
-      previousBestSeconds === null || previousBestSeconds < m;
-    const nowAtOrAbove = newSeconds >= m;
-    return previouslyBelow && nowAtOrAbove;
-  });
-}
-
-// ─── Stage ordering ───────────────────────────────────────────────────────────
-
-const STAGE_ORDER: UserStage[] = [
-  "EXPLORER",
-  "PRACTITIONER",
-  "OPTIMIZER",
-  "COACH",
-];
-
-function stageIndex(stage: UserStage): number {
-  return STAGE_ORDER.indexOf(stage);
-}
-
-function nextStageAfter(stage: UserStage): UserStage | null {
-  const idx = stageIndex(stage);
-  return idx < STAGE_ORDER.length - 1 ? STAGE_ORDER[idx + 1] : null;
-}
+// Re-export pure helpers for consumers
+export {
+  BOLT_MILESTONES,
+  detectBoltMilestones,
+  nextStageAfter,
+  STAGE_REQUIREMENTS,
+} from "./gamification-helpers";
+export type { BoltMilestone } from "./gamification-helpers";
 
 // ─── checkBoltPR ─────────────────────────────────────────────────────────────
 
 export const checkBoltPR = inngest.createFunction(
-  { id: "check-bolt-pr", name: "Check BOLT Personal Record" },
-  { event: "bolt/test.completed" },
+  {
+    id: "check-bolt-pr",
+    name: "Check BOLT Personal Record",
+    triggers: [{ event: "bolt/test.completed" }],
+  },
   async ({ event, step }) => {
     const { userId, boltTestId } = event.data as {
       userId: string;
@@ -53,26 +33,31 @@ export const checkBoltPR = inngest.createFunction(
     };
 
     // 1. Fetch the new test + all prior tests for this user
-    const [newTest, allTests] = await step.run("fetch-bolt-data", async () => {
-      const test = await prisma.boltTest.findUnique({
-        where: { id: boltTestId },
-      });
-      const tests = await prisma.boltTest.findMany({
-        where: { userId },
-        orderBy: { testedAt: "asc" },
-      });
-      return { test, tests };
-    });
+    const { test: newTest, tests: allTests } = await step.run(
+      "fetch-bolt-data",
+      async () => {
+        const test = await prisma.boltTest.findUnique({
+          where: { id: boltTestId },
+        });
+        const tests = await prisma.boltTest.findMany({
+          where: { userId },
+          orderBy: { testedAt: "asc" },
+        });
+        return { test, tests };
+      }
+    );
 
     if (!newTest) {
       return { skipped: true, reason: "BoltTest not found" };
     }
 
     // Previous best = highest seconds among all tests except this one
-    const priorTests = allTests.filter((t) => t.id !== boltTestId);
-    const previousBest =
+    const priorTests = allTests.filter(
+      (t: { id: string; seconds: number }) => t.id !== boltTestId
+    );
+    const previousBest: number | null =
       priorTests.length > 0
-        ? Math.max(...priorTests.map((t) => t.seconds))
+        ? Math.max(...priorTests.map((t: { seconds: number }) => t.seconds))
         : null;
 
     // 2. If new test is a PR: create notification
@@ -121,8 +106,11 @@ export const checkBoltPR = inngest.createFunction(
 // ─── updatePillarRings ────────────────────────────────────────────────────────
 
 export const updatePillarRings = inngest.createFunction(
-  { id: "update-pillar-rings", name: "Update Pillar Rings" },
-  { event: "session/completed" },
+  {
+    id: "update-pillar-rings",
+    name: "Update Pillar Rings",
+    triggers: [{ event: "session/completed" }],
+  },
   async ({ event, logger }) => {
     logger.info("session/completed received — pillar rings computed live", {
       userId: (event.data as { userId: string }).userId,
@@ -150,8 +138,8 @@ export const validateCoherenceStreak = inngest.createFunction(
   {
     id: "validate-coherence-streak",
     name: "Validate Coherence Streak",
+    triggers: [{ event: "session/completed" }],
   },
-  { event: "session/completed" },
   async ({ event, step }) => {
     const { userId, sessionId } = event.data as {
       userId: string;
@@ -248,30 +236,12 @@ export const validateCoherenceStreak = inngest.createFunction(
 
 // ─── checkStageAdvancement ────────────────────────────────────────────────────
 
-interface StageRequirements {
-  boltMin: number;
-  sessionsMin: number;
-  streakMin: number;
-}
-
-const STAGE_REQUIREMENTS: Record<string, StageRequirements> = {
-  PRACTITIONER: { boltMin: 20, sessionsMin: 10, streakMin: 0 },
-  OPTIMIZER: { boltMin: 30, sessionsMin: 40, streakMin: 7 },
-  COACH: { boltMin: 40, sessionsMin: 100, streakMin: 30 },
-};
-
-const STAGE_BENEFITS: Record<string, string> = {
-  PRACTITIONER: "Access advanced biochemistry protocols",
-  OPTIMIZER: "Unlock personalised HRV-driven sessions",
-  COACH: "Access coach-level insights and reporting",
-};
-
 export const checkStageAdvancement = inngest.createFunction(
   {
     id: "check-stage-advancement",
     name: "Check Stage Advancement",
+    triggers: [{ event: "gamification/stage.check" }],
   },
-  { event: "gamification/stage.check" },
   async ({ event, step }) => {
     const { userId } = event.data as { userId: string };
 
@@ -352,6 +322,3 @@ export const checkStageAdvancement = inngest.createFunction(
     return { advanced: false, currentStage: user.currentStage };
   }
 );
-
-// ─── Re-export next stage helper ─────────────────────────────────────────────
-export { nextStageAfter, STAGE_REQUIREMENTS };
