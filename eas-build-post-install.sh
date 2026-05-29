@@ -1,18 +1,23 @@
 #!/bin/bash
 set -e
 
-echo "--- eas-build-post-install: verifying node_modules ---"
+echo "--- eas-build-post-install ---"
 
-if [ ! -d "node_modules/@react-native/gradle-plugin" ]; then
-  echo "WARNING: @react-native/gradle-plugin not found, running npm install..."
+# Ensure npm install succeeded
+if [ ! -d "node_modules/react-native" ]; then
+  echo "node_modules missing, re-running npm install..."
   npm install --legacy-peer-deps
 fi
 
-if [ ! -d "node_modules/expo" ]; then
-  echo "WARNING: expo not found, running npm install..."
-  npm install --legacy-peer-deps
+# Create android/node_modules symlink BEFORE expo prebuild runs.
+# The expo-generated settings.gradle evaluates providers.exec { node ... }
+# from the android/ directory. Node traversal checks android/node_modules/
+# first — the symlink lets it find react-native without traversing up.
+mkdir -p android
+if [ ! -e "android/node_modules" ]; then
+  ln -sfn "$(pwd)/node_modules" "android/node_modules"
+  echo "Created android/node_modules -> $(pwd)/node_modules"
 fi
 
-echo "node_modules/@react-native/gradle-plugin: OK"
-echo "node_modules/expo: OK"
-echo "--- post-install complete ---"
+echo "react-native found: $(node -e "console.log(require('react-native/package.json').version)")"
+echo "--- done ---"
