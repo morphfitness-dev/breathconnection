@@ -1,6 +1,5 @@
 pluginManagement {
-    includeBuild('../node_modules/@react-native/gradle-plugin')
-    // RN 0.74.x requires react-settings-plugin
+    // react-settings-plugin is committed locally — always available without node_modules
     includeBuild('react-settings-plugin')
     repositories {
         google()
@@ -12,6 +11,9 @@ pluginManagement {
 plugins { id("com.facebook.react.settings") }
 
 rootProject.name = 'The Breath Connection'
+
+// @react-native/gradle-plugin provides com.facebook.react for app/build.gradle
+includeBuild(new File(settingsDir, "../node_modules/@react-native/gradle-plugin"))
 
 dependencyResolutionManagement {
     versionCatalogs {
