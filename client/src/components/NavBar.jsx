@@ -1,0 +1,26 @@
+import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+
+export default function NavBar() {
+  const { user, signOut } = useAuth()
+
+  return (
+    <nav className="bg-[#0D5C63] text-white px-6 py-4 flex items-center justify-between shadow-sm">
+      <Link to="/" className="font-serif text-xl tracking-wide">
+        The Breath Connection
+      </Link>
+
+      {user && (
+        <div className="flex items-center gap-4 font-sans text-sm">
+          <span className="text-white/80">{user.email}</span>
+          <button
+            onClick={signOut}
+            className="bg-[#E8A87C] text-[#0D5C63] font-medium px-4 py-1.5 rounded-full hover:bg-amber-300 transition-colors"
+          >
+            Log Out
+          </button>
+        </div>
+      )}
+    </nav>
+  )
+}
