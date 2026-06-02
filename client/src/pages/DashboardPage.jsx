@@ -1,8 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useDashboard } from '../hooks/useDashboard'
 import PillarBadge from '../components/dashboard/PillarBadge'
-import SessionModal from '../components/dashboard/SessionModal'
 import CheckInModal from '../components/dashboard/CheckInModal'
 
 const WELLBEING_EMOJIS = ['😔', '😐', '🙂', '😊', '😄']
@@ -78,7 +78,7 @@ function ProgressGrid({ sessions }) {
 export default function DashboardPage() {
   const { user } = useAuth()
   const { data, loading, error, refresh } = useDashboard()
-  const [sessionOpen, setSessionOpen] = useState(false)
+  const navigate = useNavigate()
   const [checkinOpen, setCheckinOpen] = useState(false)
 
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
@@ -138,7 +138,7 @@ export default function DashboardPage() {
                 <p className="font-sans text-sm text-gray-500 mt-1">Session {currentSession.session_number} of {totalCount}</p>
               </div>
               <button
-                onClick={() => setSessionOpen(true)}
+                onClick={() => navigate(`/session/${currentSession.id}`)}
                 className="shrink-0 bg-[#0D5C63] text-white font-sans font-medium rounded-xl px-8 py-3 hover:bg-[#0a474d] transition-colors"
               >
                 Begin Session
@@ -192,14 +192,6 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
-
-      {sessionOpen && currentSession && (
-        <SessionModal
-          session={currentSession}
-          onClose={() => setSessionOpen(false)}
-          onComplete={() => { setSessionOpen(false); refresh() }}
-        />
-      )}
 
       {checkinOpen && (
         <CheckInModal

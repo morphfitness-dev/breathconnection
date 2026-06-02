@@ -1,8 +1,19 @@
 import { Router } from 'express'
+import Mux from '@mux/mux-node'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { supabaseAdmin } from '../lib/supabaseAdmin.js'
 
 export const router = Router()
+
+async function requireAdmin(req, res, next) {
+  const { data: profile } = await supabaseAdmin
+    .from('users_profile')
+    .select('is_admin')
+    .eq('id', req.user.id)
+    .single()
+  if (!profile?.is_admin) return res.status(403).json({ error: 'Admin access required.' })
+  next()
+}
 
 router.get('/me', requireAuth, async (req, res) => {
   const { data: profile, error } = await supabaseAdmin
@@ -320,4 +331,74 @@ router.post('/bolt-scores', requireAuth, async (req, res) => {
 
   if (error) return res.status(500).json({ error: 'Failed to save BOLT score.' })
   res.json(data)
+})
+
+// GET /api/sessions/:id
+router.get('/sessions/:id', requireAuth, async (req, res) => {
+  const { data: session, error } = await supabaseAdmin
+    .from('programme_sessions')
+    .select('*')
+    .eq('id', req.params.id)
+    .single()
+
+  if (error || !session) return res.status(404).json({ error: 'Session not found.' })
+
+  const { data: completion } = await supabaseAdmin
+    .from('user_session_completions')
+    .select('comfort_rating, notes, completed_at')
+    .eq('user_id', req.user.id)
+    .eq('session_id', req.params.id)
+    .maybeSingle()
+
+  res.json({
+    ...session,
+    completed: !!completion,
+    comfort_rating: completion?.comfort_rating ?? null,
+    completion_notes: completion?.notes ?? null,
+  })
+})
+
+// GET /api/admin/videos
+router.get('/admin/videos', requireAuth, requireAdmin, async (req, res) => {
+  const { data: sessions, error } = await supabaseAdmin
+    .from('programme_sessions')
+    .select('id, programme_id, phase, week, session_number, title, pillar, mux_playback_id, mux_asset_id, video_uploaded_at')
+    .order('programme_id', { ascending: true })
+    .order('session_number', { ascending: true })
+
+  if (error) return res.status(500).json({ error: 'Failed to fetch sessions.' })
+
+  const result = sessions.map(s => ({
+    ...s,
+    video_status: s.mux_playback_id
+      ? 'ready'
+      : s.mux_asset_id
+        ? 'processing'
+        : 'none',
+  }))
+
+  res.json(result)
+})
+
+// POST /api/admin/videos/upload-url
+router.post('/admin/videos/upload-url', requireAuth, requireAdmin, async (req, res) => {
+  const { session_id } = req.body
+  if (!session_id) return res.status(400).json({ error: 'session_id is required.' })
+
+  const mux = new Mux({
+    tokenId: process.env.MUX_TOKEN_ID,
+    tokenSecret: process.env.MUX_TOKEN_SECRET,
+  })
+
+  const upload = await mux.video.uploads.create({
+    new_asset_settings: { playback_policy: ['public'], mp4_support: 'none' },
+    cors_origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  })
+
+  await supabaseAdmin
+    .from('programme_sessions')
+    .update({ mux_asset_id: upload.id })
+    .eq('id', session_id)
+
+  res.json({ upload_url: upload.url, upload_id: upload.id, session_id })
 })
