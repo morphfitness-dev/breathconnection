@@ -1,6 +1,6 @@
 create table if not exists public.user_assessments (
   id                  uuid primary key default gen_random_uuid(),
-  user_id             uuid not null references public.users_profile(id) on delete cascade,
+  user_id             uuid not null references auth.users(id) on delete cascade,
   bolt_score          integer,
   symptoms            text[] default '{}',
   stress_level        integer check (stress_level between 1 and 5),
