@@ -150,3 +150,174 @@ router.post('/assessment', requireAuth, async (req, res) => {
 
   res.json({ assigned_programme, pillar_weights })
 })
+
+// Programme metadata
+const PROGRAMMES = {
+  1: { name: 'HRV Optimisation', description: 'Rebuilding autonomic resilience through all three pillars' },
+  2: { name: 'Anxiety Management', description: 'Calming the nervous system through breath, posture, and chemistry' },
+  3: { name: 'Cardiovascular Endurance', description: 'Expanding aerobic capacity through breathing efficiency' },
+  4: { name: 'Sleep Improvement', description: 'Preparing the body and nervous system for deep, restorative rest' },
+}
+
+// GET /api/dashboard
+router.get('/dashboard', requireAuth, async (req, res) => {
+  const userId = req.user.id
+
+  // Fetch assessment
+  const { data: assessment, error: assessErr } = await supabaseAdmin
+    .from('user_assessments')
+    .select('assigned_programme, bolt_score')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (assessErr) return res.status(500).json({ error: 'Failed to fetch assessment.' })
+  if (!assessment) return res.status(404).json({ error: 'No assessment found.' })
+
+  const programmeId = assessment.assigned_programme
+
+  // Fetch all sessions for programme
+  const { data: sessions, error: sessErr } = await supabaseAdmin
+    .from('programme_sessions')
+    .select('*')
+    .eq('programme_id', programmeId)
+    .order('session_number', { ascending: true })
+
+  if (sessErr) return res.status(500).json({ error: 'Failed to fetch sessions.' })
+
+  // Fetch completed session IDs
+  const { data: completions, error: compErr } = await supabaseAdmin
+    .from('user_session_completions')
+    .select('session_id, comfort_rating, notes, completed_at')
+    .eq('user_id', userId)
+
+  if (compErr) return res.status(500).json({ error: 'Failed to fetch completions.' })
+
+  const completedIds = new Set((completions || []).map(c => c.session_id))
+
+  const sessionsWithStatus = sessions.map(s => ({
+    ...s,
+    completed: completedIds.has(s.id),
+  }))
+
+  const currentSession = sessionsWithStatus.find(s => !s.completed) || null
+
+  // Last check-in
+  const { data: checkins } = await supabaseAdmin
+    .from('user_checkins')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  const lastCheckin = checkins?.[0] || null
+
+  const prog = PROGRAMMES[programmeId] || {}
+
+  res.json({
+    programme_id: programmeId,
+    programme_name: prog.name,
+    programme_description: prog.description,
+    sessions: sessionsWithStatus,
+    currentSession,
+    completedCount: completedIds.size,
+    totalCount: sessions.length,
+    lastCheckin,
+    boltScore: assessment.bolt_score,
+  })
+})
+
+// GET /api/sessions/current
+router.get('/sessions/current', requireAuth, async (req, res) => {
+  const userId = req.user.id
+
+  const { data: assessment } = await supabaseAdmin
+    .from('user_assessments')
+    .select('assigned_programme')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!assessment) return res.status(404).json({ error: 'No assessment found.' })
+
+  const { data: sessions } = await supabaseAdmin
+    .from('programme_sessions')
+    .select('*')
+    .eq('programme_id', assessment.assigned_programme)
+    .order('session_number', { ascending: true })
+
+  const { data: completions } = await supabaseAdmin
+    .from('user_session_completions')
+    .select('session_id')
+    .eq('user_id', userId)
+
+  const completedIds = new Set((completions || []).map(c => c.session_id))
+  const current = (sessions || []).find(s => !completedIds.has(s.id)) || null
+
+  res.json(current)
+})
+
+// POST /api/sessions/:id/complete
+router.post('/sessions/:id/complete', requireAuth, async (req, res) => {
+  const { comfort_rating, notes } = req.body
+  const { error } = await supabaseAdmin
+    .from('user_session_completions')
+    .upsert({
+      user_id: req.user.id,
+      session_id: req.params.id,
+      comfort_rating: comfort_rating || null,
+      notes: notes || null,
+      completed_at: new Date().toISOString(),
+    }, { onConflict: 'user_id,session_id' })
+
+  if (error) return res.status(500).json({ error: 'Failed to record completion.' })
+  res.json({ ok: true })
+})
+
+// POST /api/checkins
+router.post('/checkins', requireAuth, async (req, res) => {
+  const { wellbeing_score, energy_score, notes } = req.body
+  const { data, error } = await supabaseAdmin
+    .from('user_checkins')
+    .insert({
+      user_id: req.user.id,
+      wellbeing_score,
+      energy_score,
+      notes: notes || null,
+    })
+    .select()
+    .single()
+
+  if (error) return res.status(500).json({ error: 'Failed to save check-in.' })
+  res.json(data)
+})
+
+// GET /api/checkins
+router.get('/checkins', requireAuth, async (req, res) => {
+  const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+  const { data, error } = await supabaseAdmin
+    .from('user_checkins')
+    .select('*')
+    .eq('user_id', req.user.id)
+    .gte('created_at', since)
+    .order('created_at', { ascending: false })
+
+  if (error) return res.status(500).json({ error: 'Failed to fetch check-ins.' })
+  res.json(data)
+})
+
+// POST /api/bolt-scores
+router.post('/bolt-scores', requireAuth, async (req, res) => {
+  const { bolt_score, session_id } = req.body
+  const { data, error } = await supabaseAdmin
+    .from('user_bolt_scores')
+    .insert({
+      user_id: req.user.id,
+      bolt_score,
+      session_id: session_id || null,
+      recorded_at: new Date().toISOString(),
+    })
+    .select()
+    .single()
+
+  if (error) return res.status(500).json({ error: 'Failed to save BOLT score.' })
+  res.json(data)
+})
