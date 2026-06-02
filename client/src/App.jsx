@@ -1,19 +1,37 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import NavBar from './components/NavBar'
 import LoginPage from './pages/LoginPage'
 import SignUpPage from './pages/SignUpPage'
 import DashboardPage from './pages/DashboardPage'
+import OnboardingPage from './pages/OnboardingPage'
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
+      <p className="font-sans text-gray-500">Loading…</p>
+    </div>
+  )
+}
 
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
-  if (loading) return <div className="min-h-screen bg-offwhite flex items-center justify-center"><p className="font-sans text-gray-500">Loading…</p></div>
-  return user ? children : <Navigate to="/login" replace />
+  const { user, loading, assessmentCompleted, assessmentLoading } = useAuth()
+  const location = useLocation()
+
+  if (loading || assessmentLoading) return <LoadingScreen />
+  if (!user) return <Navigate to="/login" replace />
+
+  // If assessment not done and not already going to onboarding, redirect there
+  if (assessmentCompleted === false && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />
+  }
+
+  return children
 }
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="min-h-screen bg-offwhite flex items-center justify-center"><p className="font-sans text-gray-500">Loading…</p></div>
+  if (loading) return <LoadingScreen />
   return user ? <Navigate to="/dashboard" replace /> : children
 }
 
@@ -25,7 +43,22 @@ function AppRoutes() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/signup" element={<PublicRoute><SignUpPage /></PublicRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute>
+              <OnboardingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </>
