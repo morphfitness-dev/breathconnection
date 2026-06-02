@@ -5,6 +5,7 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [assessmentCompleted, setAssessmentCompleted] = useState(null)
   const [assessmentLoading, setAssessmentLoading] = useState(true)
@@ -23,15 +24,30 @@ export function AuthProvider({ children }) {
     }
   }
 
+  async function fetchProfile(userId) {
+    try {
+      const { data } = await supabase
+        .from('users_profile')
+        .select('is_admin, full_name')
+        .eq('id', userId)
+        .single()
+      setProfile(data ?? null)
+    } catch {
+      setProfile(null)
+    }
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
       if (session?.user) {
         checkAssessment(session.access_token)
+        fetchProfile(session.user.id)
       } else {
         setAssessmentCompleted(null)
         setAssessmentLoading(false)
+        setProfile(null)
       }
     })
 
@@ -39,9 +55,11 @@ export function AuthProvider({ children }) {
       setUser(session?.user ?? null)
       if (session?.user) {
         checkAssessment(session.access_token)
+        fetchProfile(session.user.id)
       } else {
         setAssessmentCompleted(null)
         setAssessmentLoading(false)
+        setProfile(null)
       }
     })
 
@@ -53,6 +71,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user,
+      profile,
       loading,
       signOut,
       assessmentCompleted,

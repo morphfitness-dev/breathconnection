@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function NavBar() {
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
 
   return (
     <nav className="bg-[#0D5C63] text-white px-6 py-4 flex items-center justify-between shadow-sm">
@@ -12,6 +12,14 @@ export default function NavBar() {
 
       {user && (
         <div className="flex items-center gap-4 font-sans text-sm">
+          {profile?.is_admin && (
+            <Link
+              to="/admin/videos"
+              className="text-white/80 hover:text-white transition-colors"
+            >
+              Admin
+            </Link>
+          )}
           <span className="text-white/80">{user.email}</span>
           <button
             onClick={signOut}

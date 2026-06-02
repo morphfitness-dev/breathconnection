@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage'
 import SignUpPage from './pages/SignUpPage'
 import DashboardPage from './pages/DashboardPage'
 import OnboardingPage from './pages/OnboardingPage'
+import SessionPage from './pages/SessionPage'
+import AdminVideosPage from './pages/AdminVideosPage'
 
 function LoadingScreen() {
   return (
@@ -35,6 +37,14 @@ function PublicRoute({ children }) {
   return user ? <Navigate to="/dashboard" replace /> : children
 }
 
+function AdminRoute({ children }) {
+  const { user, profile, loading } = useAuth()
+  if (loading) return <LoadingScreen />
+  if (!user) return <Navigate to="/login" replace />
+  if (!profile?.is_admin) return <Navigate to="/dashboard" replace />
+  return children
+}
+
 function AppRoutes() {
   return (
     <>
@@ -57,6 +67,22 @@ function AppRoutes() {
             <ProtectedRoute>
               <DashboardPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/session/:id"
+          element={
+            <ProtectedRoute>
+              <SessionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/videos"
+          element={
+            <AdminRoute>
+              <AdminVideosPage />
+            </AdminRoute>
           }
         />
         <Route path="*" element={<Navigate to="/login" replace />} />
