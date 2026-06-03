@@ -20,6 +20,7 @@ export default function NavBar() {
               Admin
             </Link>
           )}
+          <Link to="/progress" className="text-white/80 hover:text-white transition-colors">Progress</Link>
           <span className="text-white/80">{user.email}</span>
           <button
             onClick={signOut}
