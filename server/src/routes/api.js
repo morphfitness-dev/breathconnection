@@ -638,3 +638,321 @@ router.post('/admin/videos/upload-url', requireAuth, requireAdmin, async (req, r
 
   res.json({ upload_url: upload.url, upload_id: upload.id, session_id })
 })
+
+// GET /api/admin/users
+router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
+  const { data: profiles } = await supabaseAdmin
+    .from('users_profile')
+    .select('id, full_name, created_at, is_admin')
+    .order('created_at', { ascending: false })
+
+  const { data: { users: authUsers } } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+  const emailMap = Object.fromEntries(authUsers.map(u => [u.id, u.email]))
+
+  const { data: assessments } = await supabaseAdmin
+    .from('user_assessments')
+    .select('user_id, assigned_programme, bolt_score, created_at')
+
+  const { data: allSessions } = await supabaseAdmin
+    .from('programme_sessions')
+    .select('id, programme_id, session_number, phase, week')
+
+  const { data: allCompletions } = await supabaseAdmin
+    .from('user_session_completions')
+    .select('user_id, session_id, completed_at, comfort_rating')
+    .order('completed_at', { ascending: true })
+
+  const { data: allBoltScores } = await supabaseAdmin
+    .from('user_bolt_scores')
+    .select('user_id, bolt_score, recorded_at')
+    .order('recorded_at', { ascending: true })
+
+  const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: allCheckins } = await supabaseAdmin
+    .from('user_checkins')
+    .select('user_id, wellbeing_score, energy_score, created_at')
+    .gte('created_at', since30)
+    .order('created_at', { ascending: true })
+
+  const ADMIN_PROGRAMMES = { 1: 'HRV Optimisation', 2: 'Anxiety Management', 3: 'Cardiovascular Endurance', 4: 'Sleep Improvement' }
+
+  const sessionMap = Object.fromEntries((allSessions || []).map(s => [s.id, s]))
+  const assessmentMap = Object.fromEntries((assessments || []).map(a => [a.user_id, a]))
+
+  const completionsByUser = {}
+  for (const c of (allCompletions || [])) {
+    if (!completionsByUser[c.user_id]) completionsByUser[c.user_id] = []
+    completionsByUser[c.user_id].push(c)
+  }
+
+  const boltByUser = {}
+  for (const b of (allBoltScores || [])) {
+    if (!boltByUser[b.user_id]) boltByUser[b.user_id] = []
+    boltByUser[b.user_id].push(b)
+  }
+
+  const checkinsByUser = {}
+  for (const c of (allCheckins || [])) {
+    if (!checkinsByUser[c.user_id]) checkinsByUser[c.user_id] = []
+    checkinsByUser[c.user_id].push(c)
+  }
+
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+
+  const users = (profiles || []).map(profile => {
+    const assessment = assessmentMap[profile.id]
+    const completions = completionsByUser[profile.id] || []
+    const boltScores = boltByUser[profile.id] || []
+    const checkins = checkinsByUser[profile.id] || []
+
+    const programmeId = assessment?.assigned_programme
+    const programmeName = ADMIN_PROGRAMMES[programmeId] || '—'
+
+    const programmeSessions = (allSessions || []).filter(s => s.programme_id === programmeId)
+    const totalSessions = programmeSessions.length
+    const completedSessionIds = new Set(completions.map(c => c.session_id))
+    const completedCount = completions.filter(c => sessionMap[c.session_id]?.programme_id === programmeId).length
+
+    const nextSession = programmeSessions
+      .sort((a, b) => a.session_number - b.session_number)
+      .find(s => !completedSessionIds.has(s.id))
+    const currentWeek = nextSession?.week ?? (totalSessions > 0 ? 8 : null)
+
+    const lastCompletion = completions.length ? new Date(completions[completions.length - 1].completed_at) : null
+    const lastCheckin = checkins.length ? new Date(checkins[checkins.length - 1].created_at) : null
+    const lastActive = lastCompletion && lastCheckin
+      ? (lastCompletion > lastCheckin ? lastCompletion : lastCheckin)
+      : lastCompletion || lastCheckin
+
+    const boltStart = assessment?.bolt_score ?? null
+    const boltLatest = boltScores.length ? boltScores[boltScores.length - 1].bolt_score : null
+
+    const recentCheckins = checkins.filter(c => new Date(c.created_at) >= sevenDaysAgo)
+    const wellbeingAvg = recentCheckins.length
+      ? Math.round(recentCheckins.reduce((s, c) => s + c.wellbeing_score, 0) / recentCheckins.length * 10) / 10
+      : null
+
+    const flags = []
+
+    if (!lastCompletion || lastCompletion < sevenDaysAgo) {
+      if (completedCount > 0 || assessment) flags.push({ type: 'inactive', label: 'No session in 7+ days', color: 'yellow' })
+    }
+
+    let streak = 0
+    for (const c of [...checkins].reverse()) {
+      if (c.wellbeing_score === 1) streak++
+      else break
+    }
+    if (streak >= 3) flags.push({ type: 'low_wellbeing', label: 'Wellbeing 1 for 3+ days', color: 'orange' })
+
+    const lastTwo = completions.slice(-2)
+    if (lastTwo.length === 2 && lastTwo.every(c => c.comfort_rating === 5)) {
+      flags.push({ type: 'too_easy', label: '2+ sessions rated "too easy"', color: 'orange' })
+    }
+
+    return {
+      id: profile.id,
+      full_name: profile.full_name || '—',
+      email: emailMap[profile.id] || '—',
+      signup_date: profile.created_at,
+      programme: programmeName,
+      programme_id: programmeId,
+      current_week: currentWeek,
+      sessions_completed: completedCount,
+      total_sessions: totalSessions,
+      last_active: lastActive?.toISOString() ?? null,
+      bolt_start: boltStart,
+      bolt_latest: boltLatest,
+      wellbeing_avg: wellbeingAvg,
+      flags,
+      is_admin: profile.is_admin,
+    }
+  })
+
+  res.json(users)
+})
+
+// GET /api/admin/users/:id
+router.get('/admin/users/:id', requireAuth, requireAdmin, async (req, res) => {
+  const userId = req.params.id
+
+  const { data: { user: authUser } } = await supabaseAdmin.auth.admin.getUserById(userId)
+  const { data: profile } = await supabaseAdmin.from('users_profile').select('*').eq('id', userId).single()
+  const { data: assessment } = await supabaseAdmin.from('user_assessments').select('*').eq('user_id', userId).maybeSingle()
+
+  const { data: programmeSessions } = assessment ? await supabaseAdmin
+    .from('programme_sessions')
+    .select('id, session_number, title, pillar, phase, week')
+    .eq('programme_id', assessment.assigned_programme)
+    .order('session_number') : { data: [] }
+
+  const sessionMap = Object.fromEntries((programmeSessions || []).map(s => [s.id, s]))
+
+  const { data: completions } = await supabaseAdmin
+    .from('user_session_completions')
+    .select('session_id, completed_at, comfort_rating, notes')
+    .eq('user_id', userId)
+    .order('completed_at', { ascending: false })
+
+  const { data: boltScores } = await supabaseAdmin
+    .from('user_bolt_scores')
+    .select('bolt_score, recorded_at, session_id')
+    .eq('user_id', userId)
+    .order('recorded_at', { ascending: false })
+
+  const { data: checkins } = await supabaseAdmin
+    .from('user_checkins')
+    .select('wellbeing_score, energy_score, notes, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  const { data: notes } = await supabaseAdmin
+    .from('admin_notes')
+    .select('id, note, created_at, admin_user_id')
+    .eq('target_user_id', userId)
+    .order('created_at', { ascending: false })
+
+  res.json({
+    id: userId,
+    email: authUser?.email,
+    profile,
+    assessment,
+    completions: (completions || []).map(c => ({
+      ...c,
+      session: sessionMap[c.session_id] || null,
+    })),
+    bolt_scores: boltScores || [],
+    checkins: checkins || [],
+    admin_notes: notes || [],
+  })
+})
+
+// POST /api/admin/notes
+router.post('/admin/notes', requireAuth, requireAdmin, async (req, res) => {
+  const { target_user_id, note } = req.body
+  const { data, error } = await supabaseAdmin
+    .from('admin_notes')
+    .insert({ admin_user_id: req.user.id, target_user_id, note })
+    .select().single()
+  if (error) return res.status(500).json({ error: 'Failed to save note.' })
+  res.json(data)
+})
+
+// POST /api/admin/invite
+router.post('/admin/invite', requireAuth, requireAdmin, async (req, res) => {
+  const { email } = req.body
+  if (!email) return res.status(400).json({ error: 'Email is required.' })
+
+  const code = Math.random().toString(36).substring(2, 6).toUpperCase() +
+               Math.random().toString(36).substring(2, 6).toUpperCase()
+
+  const { error: insertError } = await supabaseAdmin
+    .from('invite_codes')
+    .insert({ code, email, created_by_admin: req.user.id })
+
+  if (insertError) return res.status(500).json({ error: 'Failed to create invite code.' })
+
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const { Resend } = await import('resend')
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000'
+      await resend.emails.send({
+        from: 'The Breath Connection <hello@breathconnection.com>',
+        to: email,
+        subject: "You've been invited to The Breath Connection trial",
+        html: `<p>You have been invited to join The Breath Connection breathing programme trial.</p>
+               <p>Use this code when signing up: <strong>${code}</strong></p>
+               <p>Sign up here: <a href="${clientUrl}/signup">${clientUrl}/signup</a></p>`,
+      })
+    } catch (e) {
+      console.error('Resend error:', e)
+    }
+  }
+
+  res.json({ code, email })
+})
+
+// GET /api/admin/export
+router.get('/admin/export', requireAuth, requireAdmin, async (req, res) => {
+  const { data: profiles } = await supabaseAdmin
+    .from('users_profile').select('id, full_name, created_at, is_admin')
+  const { data: { users: authUsers } } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+  const emailMap = Object.fromEntries(authUsers.map(u => [u.id, u.email]))
+  const { data: assessments } = await supabaseAdmin.from('user_assessments').select('user_id, assigned_programme, bolt_score')
+  const { data: allCompletions } = await supabaseAdmin.from('user_session_completions').select('user_id, session_id, completed_at')
+  const { data: allBoltScores } = await supabaseAdmin.from('user_bolt_scores').select('user_id, bolt_score, recorded_at').order('recorded_at')
+  const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: recentCheckins } = await supabaseAdmin.from('user_checkins').select('user_id, wellbeing_score').gte('created_at', since7)
+
+  const EXPORT_PROGRAMMES = { 1: 'HRV Optimisation', 2: 'Anxiety Management', 3: 'Cardiovascular Endurance', 4: 'Sleep Improvement' }
+  const assessmentMap = Object.fromEntries((assessments || []).map(a => [a.user_id, a]))
+  const completionsByUser = {}
+  for (const c of (allCompletions || [])) {
+    if (!completionsByUser[c.user_id]) completionsByUser[c.user_id] = []
+    completionsByUser[c.user_id].push(c)
+  }
+  const boltByUser = {}
+  for (const b of (allBoltScores || [])) {
+    if (!boltByUser[b.user_id]) boltByUser[b.user_id] = []
+    boltByUser[b.user_id].push(b)
+  }
+  const checkinsByUser = {}
+  for (const c of (recentCheckins || [])) {
+    if (!checkinsByUser[c.user_id]) checkinsByUser[c.user_id] = []
+    checkinsByUser[c.user_id].push(c)
+  }
+
+  const rows = (profiles || []).map(p => {
+    const a = assessmentMap[p.id]
+    const completions = completionsByUser[p.id] || []
+    const bolts = boltByUser[p.id] || []
+    const checkins = checkinsByUser[p.id] || []
+    const boltLatest = bolts.length ? bolts[bolts.length - 1].bolt_score : ''
+    const wellbeingAvg = checkins.length
+      ? (checkins.reduce((s, c) => s + c.wellbeing_score, 0) / checkins.length).toFixed(1)
+      : ''
+    return [
+      p.full_name || '',
+      emailMap[p.id] || '',
+      p.created_at?.slice(0, 10) || '',
+      EXPORT_PROGRAMMES[a?.assigned_programme] || '',
+      completions.length,
+      a?.bolt_score ?? '',
+      boltLatest,
+      wellbeingAvg,
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
+  })
+
+  const header = '"Name","Email","Sign-up Date","Programme","Sessions Completed","BOLT Start","BOLT Latest","Wellbeing Avg (7d)"'
+  const csv = [header, ...rows].join('\n')
+
+  res.setHeader('Content-Type', 'text/csv')
+  res.setHeader('Content-Disposition', 'attachment; filename="breathconnection-users.csv"')
+  res.send(csv)
+})
+
+// POST /api/validate-invite (public)
+router.post('/validate-invite', async (req, res) => {
+  const { code } = req.body
+  if (!code) return res.status(400).json({ valid: false, error: 'Code is required.' })
+  const { data } = await supabaseAdmin
+    .from('invite_codes')
+    .select('id, code, email, used')
+    .eq('code', code.toUpperCase().trim())
+    .single()
+
+  if (!data || data.used) return res.status(400).json({ valid: false, error: 'Invalid or already used invite code.' })
+  res.json({ valid: true })
+})
+
+// POST /api/use-invite (authenticated)
+router.post('/use-invite', requireAuth, async (req, res) => {
+  const { code } = req.body
+  await supabaseAdmin
+    .from('invite_codes')
+    .update({ used: true, used_at: new Date().toISOString() })
+    .eq('code', code.toUpperCase().trim())
+    .eq('used', false)
+  res.json({ ok: true })
+})

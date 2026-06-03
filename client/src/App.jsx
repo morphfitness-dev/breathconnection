@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage'
 import OnboardingPage from './pages/OnboardingPage'
 import SessionPage from './pages/SessionPage'
 import AdminVideosPage from './pages/AdminVideosPage'
+import AdminPage from './pages/AdminPage'
 import ProgressPage from './pages/ProgressPage'
 
 function LoadingScreen() {
@@ -84,6 +85,14 @@ function AppRoutes() {
             <ProtectedRoute>
               <ProgressPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminPage />
+            </AdminRoute>
           }
         />
         <Route

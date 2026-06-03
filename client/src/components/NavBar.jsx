@@ -14,7 +14,7 @@ export default function NavBar() {
         <div className="flex items-center gap-4 font-sans text-sm">
           {profile?.is_admin && (
             <Link
-              to="/admin/videos"
+              to="/admin"
               className="text-white/80 hover:text-white transition-colors"
             >
               Admin
