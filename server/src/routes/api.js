@@ -358,6 +358,242 @@ router.get('/sessions/:id', requireAuth, async (req, res) => {
   })
 })
 
+// GET /api/progress
+router.get('/progress', requireAuth, async (req, res) => {
+  const userId = req.user.id
+
+  // Assessment (onboarding bolt score + programme + created_at)
+  const { data: assessment } = await supabaseAdmin
+    .from('user_assessments')
+    .select('bolt_score, assigned_programme, created_at')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!assessment) return res.status(404).json({ error: 'No assessment found.' })
+
+  const programmeId = assessment.assigned_programme
+
+  // All programme sessions
+  const { data: sessions } = await supabaseAdmin
+    .from('programme_sessions')
+    .select('id, session_number, title, pillar, phase, week')
+    .eq('programme_id', programmeId)
+    .order('session_number', { ascending: true })
+
+  // All completions for this user (with session join)
+  const { data: completions } = await supabaseAdmin
+    .from('user_session_completions')
+    .select('session_id, completed_at, comfort_rating')
+    .eq('user_id', userId)
+    .order('completed_at', { ascending: true })
+
+  // BOLT scores (exclude onboarding — those come from user_assessments)
+  const { data: boltScores } = await supabaseAdmin
+    .from('user_bolt_scores')
+    .select('bolt_score, recorded_at')
+    .eq('user_id', userId)
+    .order('recorded_at', { ascending: true })
+
+  // Check-ins (last 30 days)
+  const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: checkins } = await supabaseAdmin
+    .from('user_checkins')
+    .select('wellbeing_score, energy_score, created_at')
+    .eq('user_id', userId)
+    .gte('created_at', since30)
+    .order('created_at', { ascending: true })
+
+  // Build bolt_scores array: start with onboarding score
+  const allBoltScores = []
+  if (assessment.bolt_score != null) {
+    allBoltScores.push({ date: assessment.created_at, score: assessment.bolt_score, source: 'onboarding' })
+  }
+  for (const b of (boltScores || [])) {
+    allBoltScores.push({ date: b.recorded_at, score: b.bolt_score, source: 'session' })
+  }
+
+  // Completed session IDs set
+  const completedIds = new Set((completions || []).map(c => c.session_id))
+  const completedCount = completedIds.size
+  const totalCount = (sessions || []).length
+
+  // Current session = first not completed
+  const currentSession = (sessions || []).find(s => !completedIds.has(s.id))
+  const currentPhase = currentSession?.phase ?? 4
+  const currentWeek = currentSession?.week ?? 8
+  const currentPillar = currentSession?.pillar ?? 'integration'
+
+  // Next BOLT session: sessions 3 and 8 require BOLT scores
+  const boltSessions = (sessions || []).filter(s => s.session_number === 3 || s.session_number === 8)
+  const nextBoltSession = boltSessions.find(s => !completedIds.has(s.id))
+
+  // Estimated completion: sessions remaining, 1 per day
+  const remaining = totalCount - completedCount
+  const estimatedCompletionDate = new Date(Date.now() + remaining * 24 * 60 * 60 * 1000).toISOString()
+
+  // Wellbeing averages
+  const allCheckins = checkins || []
+  const firstWeekCheckins = allCheckins.slice(0, 7)
+  const lastWeekCheckins = allCheckins.slice(-7)
+  const avg = arr => arr.length ? Math.round(arr.reduce((s, c) => s + c.wellbeing_score, 0) / arr.length * 10) / 10 : null
+
+  // Completions enriched with pillar (for heatmap)
+  const sessionMap = Object.fromEntries((sessions || []).map(s => [s.id, s]))
+  const enrichedCompletions = (completions || []).map(c => ({
+    completed_at: c.completed_at,
+    session_id: c.session_id,
+    pillar: sessionMap[c.session_id]?.pillar ?? 'integration',
+    session_number: sessionMap[c.session_id]?.session_number,
+  }))
+
+  const PROGRAMMES = {
+    1: 'HRV Optimisation',
+    2: 'Anxiety Management',
+    3: 'Cardiovascular Endurance',
+    4: 'Sleep Improvement',
+  }
+
+  res.json({
+    bolt_scores: allBoltScores,
+    checkins: allCheckins,
+    completions: enrichedCompletions,
+    programme: {
+      id: programmeId,
+      name: PROGRAMMES[programmeId] || `Programme ${programmeId}`,
+      assigned_at: assessment.created_at,
+      current_phase: currentPhase,
+      current_week: currentWeek,
+      current_pillar: currentPillar,
+      estimated_completion: estimatedCompletionDate,
+      total_sessions: totalCount,
+    },
+    onboarding_bolt: assessment.bolt_score,
+    completed_count: completedCount,
+    total_count: totalCount,
+    next_bolt_session: nextBoltSession ? nextBoltSession.session_number : null,
+    wellbeing_avg_first_week: avg(firstWeekCheckins),
+    wellbeing_avg_last_week: avg(lastWeekCheckins),
+  })
+})
+
+// GET /api/progress
+router.get('/progress', requireAuth, async (req, res) => {
+  const userId = req.user.id
+
+  // Assessment (onboarding bolt score + programme + created_at)
+  const { data: assessment } = await supabaseAdmin
+    .from('user_assessments')
+    .select('bolt_score, assigned_programme, created_at')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (!assessment) return res.status(404).json({ error: 'No assessment found.' })
+
+  const programmeId = assessment.assigned_programme
+
+  // All programme sessions
+  const { data: sessions } = await supabaseAdmin
+    .from('programme_sessions')
+    .select('id, session_number, title, pillar, phase, week')
+    .eq('programme_id', programmeId)
+    .order('session_number', { ascending: true })
+
+  // All completions for this user (with session join)
+  const { data: completions } = await supabaseAdmin
+    .from('user_session_completions')
+    .select('session_id, completed_at, comfort_rating')
+    .eq('user_id', userId)
+    .order('completed_at', { ascending: true })
+
+  // BOLT scores (exclude onboarding — those come from user_assessments)
+  const { data: boltScores } = await supabaseAdmin
+    .from('user_bolt_scores')
+    .select('bolt_score, recorded_at')
+    .eq('user_id', userId)
+    .order('recorded_at', { ascending: true })
+
+  // Check-ins (last 30 days)
+  const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: checkins } = await supabaseAdmin
+    .from('user_checkins')
+    .select('wellbeing_score, energy_score, created_at')
+    .eq('user_id', userId)
+    .gte('created_at', since30)
+    .order('created_at', { ascending: true })
+
+  // Build bolt_scores array: start with onboarding score
+  const allBoltScores = []
+  if (assessment.bolt_score != null) {
+    allBoltScores.push({ date: assessment.created_at, score: assessment.bolt_score, source: 'onboarding' })
+  }
+  for (const b of (boltScores || [])) {
+    allBoltScores.push({ date: b.recorded_at, score: b.bolt_score, source: 'session' })
+  }
+
+  // Completed session IDs set
+  const completedIds = new Set((completions || []).map(c => c.session_id))
+  const completedCount = completedIds.size
+  const totalCount = (sessions || []).length
+
+  // Current session = first not completed
+  const currentSession = (sessions || []).find(s => !completedIds.has(s.id))
+  const currentPhase = currentSession?.phase ?? 4
+  const currentWeek = currentSession?.week ?? 8
+  const currentPillar = currentSession?.pillar ?? 'integration'
+
+  // Next BOLT session: sessions 3 and 8 require BOLT scores
+  const boltSessions = (sessions || []).filter(s => s.session_number === 3 || s.session_number === 8)
+  const nextBoltSession = boltSessions.find(s => !completedIds.has(s.id))
+
+  // Estimated completion: sessions remaining, 1 per day
+  const remaining = totalCount - completedCount
+  const estimatedCompletionDate = new Date(Date.now() + remaining * 24 * 60 * 60 * 1000).toISOString()
+
+  // Wellbeing averages
+  const allCheckins = checkins || []
+  const firstWeekCheckins = allCheckins.slice(0, 7)
+  const lastWeekCheckins = allCheckins.slice(-7)
+  const avg = arr => arr.length ? Math.round(arr.reduce((s, c) => s + c.wellbeing_score, 0) / arr.length * 10) / 10 : null
+
+  // Completions enriched with pillar (for heatmap)
+  const sessionMap = Object.fromEntries((sessions || []).map(s => [s.id, s]))
+  const enrichedCompletions = (completions || []).map(c => ({
+    completed_at: c.completed_at,
+    session_id: c.session_id,
+    pillar: sessionMap[c.session_id]?.pillar ?? 'integration',
+    session_number: sessionMap[c.session_id]?.session_number,
+  }))
+
+  const PROGRAMMES = {
+    1: 'HRV Optimisation',
+    2: 'Anxiety Management',
+    3: 'Cardiovascular Endurance',
+    4: 'Sleep Improvement',
+  }
+
+  res.json({
+    bolt_scores: allBoltScores,
+    checkins: allCheckins,
+    completions: enrichedCompletions,
+    programme: {
+      id: programmeId,
+      name: PROGRAMMES[programmeId] || `Programme ${programmeId}`,
+      assigned_at: assessment.created_at,
+      current_phase: currentPhase,
+      current_week: currentWeek,
+      current_pillar: currentPillar,
+      estimated_completion: estimatedCompletionDate,
+      total_sessions: totalCount,
+    },
+    onboarding_bolt: assessment.bolt_score,
+    completed_count: completedCount,
+    total_count: totalCount,
+    next_bolt_session: nextBoltSession ? nextBoltSession.session_number : null,
+    wellbeing_avg_first_week: avg(firstWeekCheckins),
+    wellbeing_avg_last_week: avg(lastWeekCheckins),
+  })
+})
+
 // GET /api/admin/videos
 router.get('/admin/videos', requireAuth, requireAdmin, async (req, res) => {
   const { data: sessions, error } = await supabaseAdmin
