@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import BoltChart from '../components/progress/BoltChart'
 import WellbeingChart from '../components/progress/WellbeingChart'
 import SessionHeatmap from '../components/progress/SessionHeatmap'
+import Footer from '../components/Footer'
 
 const PILLAR_LABELS = {
   biomechanics: 'Biomechanics',
@@ -31,7 +32,7 @@ export default function ProgressPage() {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/progress`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       })
-      if (!res.ok) { setError('Failed to load progress.'); setLoading(false); return }
+      if (!res.ok) { setError('Unable to load your progress. Please try again.'); setLoading(false); return }
       setData(await res.json())
       setLoading(false)
     }
@@ -64,7 +65,8 @@ export default function ProgressPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAF8F5]">
+    <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
+    <main className="flex-1">
       <div className="max-w-4xl mx-auto px-6 py-10 space-y-8">
 
         {/* Header */}
@@ -178,5 +180,8 @@ export default function ProgressPage() {
         </p>
       </div>
     </main>
+    <Footer />
+    </div>
   )
 }
+

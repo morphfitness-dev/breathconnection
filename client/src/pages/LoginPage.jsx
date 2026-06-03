@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import AuthCard from '../components/AuthCard'
+import Spinner from '../components/Spinner'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -47,8 +48,9 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-[#0D5C63] text-white font-sans font-medium py-2.5 rounded-lg hover:bg-[#094a50] transition-colors disabled:opacity-50"
+          className="bg-[#0D5C63] text-white font-sans font-medium py-2.5 rounded-lg hover:bg-[#094a50] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
+          {loading && <Spinner />}
           {loading ? 'Signing in…' : 'Sign In'}
         </button>
         <div className="flex items-center justify-between font-sans text-sm text-gray-500">

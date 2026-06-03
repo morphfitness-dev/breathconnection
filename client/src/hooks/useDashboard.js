@@ -12,7 +12,7 @@ export function useDashboard() {
     const res = await window.fetch(`${import.meta.env.VITE_API_URL}/api/dashboard`, {
       headers: { Authorization: `Bearer ${session.access_token}` }
     })
-    if (!res.ok) { setError('Failed to load dashboard'); setLoading(false); return }
+    if (!res.ok) { setError('Unable to load your dashboard. Please try again.'); setLoading(false); return }
     setData(await res.json())
     setLoading(false)
   }, [])

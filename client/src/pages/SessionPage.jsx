@@ -128,7 +128,7 @@ export default function SessionPage() {
   if (showCompletion) {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center px-6 py-12 ${hasVideo ? 'bg-[#FAF8F5]' : 'bg-[#0A0F0D]'}`}>
-        <div className={`max-w-lg w-full rounded-2xl p-8 shadow-xl ${hasVideo ? 'bg-white' : 'bg-white/5 border border-white/10'}`}>
+        <div className={`max-w-lg w-full rounded-2xl p-6 sm:p-8 shadow-xl ${hasVideo ? 'bg-white' : 'bg-white/5 border border-white/10'}`}>
           <div className={`text-center mb-6 ${hasVideo ? '' : 'text-white'}`}>
             <div className="text-4xl mb-3">✓</div>
             <h1 className={`font-serif text-2xl mb-1 ${hasVideo ? 'text-[#0D5C63]' : 'text-white'}`}>Session Complete</h1>
@@ -210,7 +210,7 @@ export default function SessionPage() {
         >
           ←
         </button>
-        <h1 className="text-white font-sans font-medium text-sm flex-1 truncate">{session.title}</h1>
+        <h1 className="text-white font-sans font-medium text-xs sm:text-sm flex-1 truncate">{session.title}</h1>
         <div className="flex items-center gap-2 shrink-0">
           <PillarBadge pillar={session.pillar} />
           {session.duration_minutes && (

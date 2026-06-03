@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useDashboard } from '../hooks/useDashboard'
 import PillarBadge from '../components/dashboard/PillarBadge'
 import CheckInModal from '../components/dashboard/CheckInModal'
+import Footer from '../components/Footer'
 
 const WELLBEING_EMOJIS = ['😔', '😐', '🙂', '😊', '😄']
 
@@ -104,7 +105,8 @@ export default function DashboardPage() {
   const allDone = completedCount === totalCount
 
   return (
-    <main className="min-h-screen bg-[#FAF8F5]">
+    <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
+    <main className="flex-1">
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
 
         {/* Header */}
@@ -200,5 +202,7 @@ export default function DashboardPage() {
         />
       )}
     </main>
+    <Footer />
+    </div>
   )
 }

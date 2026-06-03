@@ -60,7 +60,7 @@ export default function AdminUsersView() {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/users`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         })
-        if (!res.ok) throw new Error('Failed to fetch users')
+        if (!res.ok) throw new Error('Unable to load users. Please refresh.')
         const data = await res.json()
         setUsers(data)
       } catch (e) {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import Spinner from '../Spinner'
 
 export default function InviteModal({ onClose }) {
   const [email, setEmail] = useState('')
@@ -83,8 +84,9 @@ export default function InviteModal({ onClose }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 bg-[#0D5C63] text-white font-sans text-sm font-medium py-2.5 rounded-xl hover:bg-[#094a50] transition-colors disabled:opacity-50"
+                className="flex-1 bg-[#0D5C63] text-white font-sans text-sm font-medium py-2.5 rounded-xl hover:bg-[#094a50] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
+                {loading && <Spinner />}
                 {loading ? 'Sending…' : 'Send Invite'}
               </button>
             </div>

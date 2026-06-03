@@ -81,7 +81,7 @@ export default function UserDetailView({ userId, onBack }) {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/users/${userId}`, {
           headers: { Authorization: `Bearer ${session.access_token}` },
         })
-        if (!res.ok) throw new Error('Failed to fetch user details')
+        if (!res.ok) throw new Error('Unable to load user details. Please try again.')
         const json = await res.json()
         setData(json)
       } catch (e) {

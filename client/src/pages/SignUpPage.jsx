@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import AuthCard from '../components/AuthCard'
+import Spinner from '../components/Spinner'
 
 const TRIAL_MODE = import.meta.env.VITE_TRIAL_MODE === 'true'
 
@@ -124,8 +125,9 @@ export default function SignUpPage() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-[#0D5C63] text-white font-sans font-medium py-2.5 rounded-lg hover:bg-[#094a50] transition-colors disabled:opacity-50"
+          className="bg-[#0D5C63] text-white font-sans font-medium py-2.5 rounded-lg hover:bg-[#094a50] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
+          {loading && <Spinner />}
           {loading ? 'Creating account…' : 'Create Account'}
         </button>
         <p className="font-sans text-sm text-gray-500 text-center">

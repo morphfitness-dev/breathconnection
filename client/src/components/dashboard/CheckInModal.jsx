@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import Spinner from '../Spinner'
 
 const WELLBEING_EMOJIS = ['😔', '😐', '🙂', '😊', '😄']
 
@@ -89,8 +90,9 @@ export default function CheckInModal({ onClose, onSave }) {
         <button
           onClick={handleSave}
           disabled={saving || !wellbeing || !energy}
-          className="w-full bg-[#0D5C63] text-white font-sans font-medium rounded-xl py-3 hover:bg-[#0a474d] transition-colors disabled:opacity-50"
+          className="w-full bg-[#0D5C63] text-white font-sans font-medium rounded-xl py-3 hover:bg-[#0a474d] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
+          {saving && <Spinner />}
           {saving ? 'Saving…' : 'Save Check-in'}
         </button>
       </div>

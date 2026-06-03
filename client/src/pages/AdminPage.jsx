@@ -3,15 +3,16 @@ import { Link } from 'react-router-dom'
 import AdminUsersView from '../components/admin/AdminUsersView'
 import AdminExportView from '../components/admin/AdminExportView'
 import InviteModal from '../components/admin/InviteModal'
+import Footer from '../components/Footer'
 
 export default function AdminPage() {
   const [tab, setTab] = useState('users')
   const [inviteOpen, setInviteOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5]">
+    <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
       {/* Admin sub-nav */}
-      <div className="bg-[#094a50] text-white px-6 py-3 flex items-center justify-between">
+      <div className="bg-[#094a50] text-white px-6 py-3 flex items-center justify-between overflow-x-auto">
         <div className="flex gap-1">
           {['users', 'export'].map(t => (
             <button key={t} onClick={() => setTab(t)}
@@ -30,10 +31,12 @@ export default function AdminPage() {
         </button>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 flex-1">
         {tab === 'users' && <AdminUsersView />}
         {tab === 'export' && <AdminExportView />}
       </div>
+
+      <Footer />
 
       {inviteOpen && <InviteModal onClose={() => setInviteOpen(false)} />}
     </div>
