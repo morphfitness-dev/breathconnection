@@ -24,6 +24,7 @@ export default function NavBar() {
                 Admin
               </Link>
             )}
+            <Link to="/library" className="text-white/80 hover:text-white transition-colors">Library</Link>
             <Link to="/progress" className="text-white/80 hover:text-white transition-colors">Progress</Link>
             <button onClick={() => setHelpOpen(true)} className="text-white/60 hover:text-white font-sans text-sm transition-colors">Help</button>
             <span className="text-white/80">{user.email}</span>

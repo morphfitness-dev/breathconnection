@@ -9,6 +9,7 @@ import SessionPage from './pages/SessionPage'
 import AdminVideosPage from './pages/AdminVideosPage'
 import AdminPage from './pages/AdminPage'
 import ProgressPage from './pages/ProgressPage'
+import LibraryPage from './pages/LibraryPage'
 
 function LoadingScreen() {
   return (
@@ -84,6 +85,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <ProgressPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/library"
+          element={
+            <ProtectedRoute>
+              <LibraryPage />
             </ProtectedRoute>
           }
         />
