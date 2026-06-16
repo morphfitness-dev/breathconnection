@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import BoltChart from '../components/progress/BoltChart'
 import WellbeingChart from '../components/progress/WellbeingChart'
 import SessionHeatmap from '../components/progress/SessionHeatmap'
+import BiometricsChart from '../components/progress/BiometricsChart'
+import BiometricsLogModal from '../components/progress/BiometricsLogModal'
 import Footer from '../components/Footer'
 
 const PILLAR_LABELS = {
@@ -25,19 +27,19 @@ export default function ProgressPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showBiometricsModal, setShowBiometricsModal] = useState(false)
 
-  useEffect(() => {
-    async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/progress`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      })
-      if (!res.ok) { setError('Unable to load your progress. Please try again.'); setLoading(false); return }
-      setData(await res.json())
-      setLoading(false)
-    }
-    load()
+  const load = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/progress`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+    if (!res.ok) { setError('Unable to load your progress. Please try again.'); setLoading(false); return }
+    setData(await res.json())
+    setLoading(false)
   }, [])
+
+  useEffect(() => { load() }, [load])
 
   if (loading) return (
     <main className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
@@ -52,10 +54,12 @@ export default function ProgressPage() {
   )
 
   const {
-    bolt_scores, checkins, completions, programme,
+    bolt_scores, checkins, completions, programme, biometrics,
     onboarding_bolt, completed_count, total_count,
     next_bolt_session, wellbeing_avg_first_week, wellbeing_avg_last_week,
   } = data
+  const mostRecentBiometric = biometrics && biometrics.length > 0 ? biometrics[biometrics.length - 1] : null
+  const workoutHistory = [...completions].sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
 
   const mostRecentBolt = bolt_scores.length > 0 ? bolt_scores[bolt_scores.length - 1].score : null
   const pillarColor = PILLAR_COLORS[programme.current_pillar] || '#0D5C63'
@@ -165,6 +169,51 @@ export default function ProgressPage() {
           )}
         </div>
 
+        {/* Biometrics */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="font-serif text-xl text-[#0D5C63]">Biometrics</h2>
+            <button
+              onClick={() => setShowBiometricsModal(true)}
+              className="bg-[#0D5C63] text-white font-sans text-sm font-medium px-4 py-1.5 rounded-full hover:bg-[#094a50] transition-colors"
+            >
+              Log Entry
+            </button>
+          </div>
+          <p className="font-sans text-xs text-gray-400 mb-4">Last 90 days — resting heart rate &amp; sleep</p>
+          {biometrics && biometrics.length >= 2 ? (
+            <BiometricsChart data={biometrics} />
+          ) : (
+            <div className="bg-gray-50 rounded-xl p-6 text-center">
+              <p className="font-sans text-sm text-gray-500">Log at least two entries to see your trend.</p>
+            </div>
+          )}
+          {mostRecentBiometric && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-100">
+              <div>
+                <p className="font-sans text-xs text-gray-400 uppercase tracking-wider mb-1">Resting HR</p>
+                <p className="font-sans text-sm font-medium text-gray-700">{mostRecentBiometric.resting_heart_rate ?? '—'} bpm</p>
+              </div>
+              <div>
+                <p className="font-sans text-xs text-gray-400 uppercase tracking-wider mb-1">HRV</p>
+                <p className="font-sans text-sm font-medium text-gray-700">{mostRecentBiometric.hrv ?? '—'} ms</p>
+              </div>
+              <div>
+                <p className="font-sans text-xs text-gray-400 uppercase tracking-wider mb-1">Sleep</p>
+                <p className="font-sans text-sm font-medium text-gray-700">{mostRecentBiometric.sleep_hours ?? '—'} hrs</p>
+              </div>
+              <div>
+                <p className="font-sans text-xs text-gray-400 uppercase tracking-wider mb-1">Blood Pressure</p>
+                <p className="font-sans text-sm font-medium text-gray-700">
+                  {mostRecentBiometric.systolic && mostRecentBiometric.diastolic
+                    ? `${mostRecentBiometric.systolic}/${mostRecentBiometric.diastolic}`
+                    : '—'}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Heatmap */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <h2 className="font-serif text-xl text-[#0D5C63] mb-1">Session Consistency</h2>
@@ -175,12 +224,40 @@ export default function ProgressPage() {
           </p>
         </div>
 
+        {/* Workout History */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="font-serif text-xl text-[#0D5C63] mb-1">Workout History</h2>
+          <p className="font-sans text-xs text-gray-400 mb-4">Every completed session, most recent first</p>
+          {workoutHistory.length > 0 ? (
+            <div className="flex flex-col gap-2 max-h-96 overflow-y-auto">
+              {workoutHistory.map(w => (
+                <div key={w.session_id} className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
+                  <div>
+                    <p className="font-sans text-sm font-medium text-gray-700">
+                      {w.title || `Session ${w.session_number}`}
+                    </p>
+                    <p className="font-sans text-xs text-gray-400">{formatDate(w.completed_at)}</p>
+                  </div>
+                  {w.comfort_rating != null && (
+                    <span className="font-sans text-xs font-medium text-gray-500">Comfort: {w.comfort_rating}/5</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="font-sans text-sm text-gray-500">No sessions completed yet.</p>
+          )}
+        </div>
+
         <p className="font-sans text-xs text-gray-400 text-center pb-4">
           Your data is private and only visible to you.
         </p>
       </div>
     </main>
     <Footer />
+    {showBiometricsModal && (
+      <BiometricsLogModal onClose={() => setShowBiometricsModal(false)} onSave={load} />
+    )}
     </div>
   )
 }

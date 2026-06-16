@@ -14,8 +14,27 @@ export default function NavBar() {
           The Breath Connection
         </Link>
 
+        {!user && (
+          <a
+            href="/what-to-expect.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white/80 hover:text-white font-sans text-sm transition-colors"
+          >
+            What to Expect
+          </a>
+        )}
+
         {user && (
           <div className="flex items-center gap-4 font-sans text-sm">
+            <a
+              href="/what-to-expect.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/80 hover:text-white transition-colors"
+            >
+              What to Expect
+            </a>
             {profile?.is_admin && (
               <Link
                 to="/admin"
