@@ -568,6 +568,26 @@ router.post('/admin/videos/upload-url', requireAuth, requireAdmin, async (req, r
   res.json({ upload_url: upload.url, upload_id: upload.id, session_id })
 })
 
+// PATCH /api/admin/sessions/:id — reassign a session's programme/week/order (programme builder drag-and-drop)
+router.patch('/admin/sessions/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { programme_id, phase, week, session_number } = req.body
+  const updates = {}
+  if (programme_id != null) updates.programme_id = programme_id
+  if (phase != null) updates.phase = phase
+  if (week != null) updates.week = week
+  if (session_number != null) updates.session_number = session_number
+
+  const { data, error } = await supabaseAdmin
+    .from('programme_sessions')
+    .update(updates)
+    .eq('id', req.params.id)
+    .select()
+    .single()
+
+  if (error) return res.status(500).json({ error: 'Failed to update session.' })
+  res.json(data)
+})
+
 // GET /api/admin/users
 router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
   const { data: profiles } = await supabaseAdmin

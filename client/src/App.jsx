@@ -7,6 +7,8 @@ import DashboardPage from './pages/DashboardPage'
 import OnboardingPage from './pages/OnboardingPage'
 import SessionPage from './pages/SessionPage'
 import AdminVideosPage from './pages/AdminVideosPage'
+import AdminLibraryPage from './pages/AdminLibraryPage'
+import AdminProgrammeBuilderPage from './pages/AdminProgrammeBuilderPage'
 import AdminPage from './pages/AdminPage'
 import ProgressPage from './pages/ProgressPage'
 import LibraryPage from './pages/LibraryPage'
@@ -109,6 +111,22 @@ function AppRoutes() {
           element={
             <AdminRoute>
               <AdminVideosPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/library"
+          element={
+            <AdminRoute>
+              <AdminLibraryPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/builder"
+          element={
+            <AdminRoute>
+              <AdminProgrammeBuilderPage />
             </AdminRoute>
           }
         />

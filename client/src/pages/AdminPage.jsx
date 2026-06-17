@@ -24,6 +24,14 @@ export default function AdminPage() {
             className="font-sans text-sm px-4 py-1.5 rounded-lg text-white/60 hover:text-white transition-colors">
             Videos
           </Link>
+          <Link to="/admin/library"
+            className="font-sans text-sm px-4 py-1.5 rounded-lg text-white/60 hover:text-white transition-colors">
+            Library
+          </Link>
+          <Link to="/admin/builder"
+            className="font-sans text-sm px-4 py-1.5 rounded-lg text-white/60 hover:text-white transition-colors">
+            Programme Builder
+          </Link>
         </div>
         <button onClick={() => setInviteOpen(true)}
           className="bg-[#E8A87C] text-[#0D5C63] font-sans text-sm font-medium px-4 py-1.5 rounded-lg hover:bg-amber-300 transition-colors">
