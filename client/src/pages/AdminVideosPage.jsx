@@ -3,13 +3,6 @@ import { supabase } from '../lib/supabase'
 import UploadModal from '../components/admin/UploadModal'
 import PreviewModal from '../components/admin/PreviewModal'
 
-const PROGRAMME_NAMES = {
-  1: 'HRV Optimisation',
-  2: 'Anxiety Management',
-  3: 'Cardiovascular Endurance',
-  4: 'Sleep Improvement',
-}
-
 const STATUS_BADGE = {
   none: { dot: 'bg-red-500', label: 'No video' },
   processing: { dot: 'bg-yellow-400', label: 'Processing' },
@@ -18,6 +11,7 @@ const STATUS_BADGE = {
 
 export default function AdminVideosPage() {
   const [sessions, setSessions] = useState([])
+  const [programmeNames, setProgrammeNames] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filterProgramme, setFilterProgramme] = useState('all')
@@ -47,7 +41,18 @@ export default function AdminVideosPage() {
     }
   }
 
-  useEffect(() => { fetchVideos() }, [])
+  async function fetchProgrammes() {
+    const token = await getToken()
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/programmes`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setProgrammeNames(Object.fromEntries(data.map(p => [p.id, p.name])))
+    }
+  }
+
+  useEffect(() => { fetchVideos(); fetchProgrammes() }, [])
 
   const filtered = sessions.filter(s => {
     if (filterProgramme !== 'all' && String(s.programme_id) !== filterProgramme) return false
@@ -87,7 +92,7 @@ export default function AdminVideosPage() {
           >
             <option value="all">All programmes</option>
             {programmes.map(p => (
-              <option key={p} value={String(p)}>{PROGRAMME_NAMES[p] || `Programme ${p}`}</option>
+              <option key={p} value={String(p)}>{programmeNames[p] || `Programme ${p}`}</option>
             ))}
           </select>
           <select
@@ -123,7 +128,7 @@ export default function AdminVideosPage() {
                 return (
                   <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 font-sans text-sm text-gray-600">
-                      {PROGRAMME_NAMES[s.programme_id] || `P${s.programme_id}`}
+                      {programmeNames[s.programme_id] || `P${s.programme_id}`}
                     </td>
                     <td className="px-4 py-3 font-sans text-sm text-gray-600">{s.week ?? '—'}</td>
                     <td className="px-4 py-3 font-sans text-sm text-gray-600">{s.session_number}</td>

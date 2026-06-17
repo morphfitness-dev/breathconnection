@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
-const PROGRAMME_NAMES = { 1: 'HRV Optimisation', 2: 'Anxiety Management', 3: 'Cardiovascular Endurance', 4: 'Sleep Improvement' }
 const PANIC_LABELS = { never: 'Never', occasionally: 'Occasionally', sometimes: 'Sometimes (monthly)', frequently: 'Frequently (weekly+)' }
 const ACTIVITY_LABELS = { sedentary: 'Sedentary', lightly_active: 'Lightly active', moderately_active: 'Moderately active', very_active: 'Very active', athlete: 'Athlete' }
 const TIME_LABELS = { '5min': '5 minutes', '10min': '10 minutes', '15min': '15 minutes', '20plus': '20+ minutes' }
@@ -66,24 +65,36 @@ function AssessmentField({ label, value }) {
 
 export default function UserDetailView({ userId, onBack }) {
   const [data, setData] = useState(null)
+  const [programmes, setProgrammes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [noteText, setNoteText] = useState('')
   const [savingNote, setSavingNote] = useState(false)
   const [noteError, setNoteError] = useState(null)
+  const [reassigning, setReassigning] = useState(false)
+
+  async function getToken() {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session.access_token
+  }
 
   useEffect(() => {
     async function load() {
       setLoading(true)
       setError(null)
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/users/${userId}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        })
-        if (!res.ok) throw new Error('Unable to load user details. Please try again.')
-        const json = await res.json()
-        setData(json)
+        const token = await getToken()
+        const [userRes, progRes] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_URL}/api/admin/users/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${import.meta.env.VITE_API_URL}/api/programmes`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ])
+        if (!userRes.ok) throw new Error('Unable to load user details. Please try again.')
+        setData(await userRes.json())
+        if (progRes.ok) setProgrammes(await progRes.json())
       } catch (e) {
         setError(e.message)
       } finally {
@@ -92,6 +103,25 @@ export default function UserDetailView({ userId, onBack }) {
     }
     load()
   }, [userId])
+
+  async function handleReassign(programmeId) {
+    setReassigning(true)
+    try {
+      const token = await getToken()
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/users/${userId}/programme`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ programme_id: Number(programmeId) }),
+      })
+      if (!res.ok) throw new Error('Failed to reassign programme')
+      const updated = await res.json()
+      setData(d => ({ ...d, assessment: { ...d.assessment, assigned_programme: updated.assigned_programme } }))
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setReassigning(false)
+    }
+  }
 
   async function saveNote(e) {
     e.preventDefault()
@@ -158,7 +188,20 @@ export default function UserDetailView({ userId, onBack }) {
       <Section title="Assessment Responses">
         {assessment ? (
           <div className="divide-y divide-gray-50">
-            <AssessmentField label="Programme" value={PROGRAMME_NAMES[assessment.assigned_programme]} />
+            <div className="flex gap-4 py-2 border-b border-gray-50 items-center">
+              <span className="font-sans text-sm text-gray-500 w-40 shrink-0">Programme</span>
+              <select
+                value={assessment.assigned_programme || ''}
+                onChange={e => handleReassign(e.target.value)}
+                disabled={reassigning}
+                className="font-sans text-sm border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#0D5C63]/30"
+              >
+                {programmes.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}{p.is_custom ? ' ✦' : ''}</option>
+                ))}
+              </select>
+              {reassigning && <span className="font-sans text-xs text-gray-400 animate-pulse">Saving…</span>}
+            </div>
             <AssessmentField label="BOLT Score" value={assessment.bolt_score} />
             <AssessmentField label="Stress Level" value={assessment.stress_level != null ? `${assessment.stress_level}/5` : null} />
             <AssessmentField label="Anxiety Level" value={assessment.anxiety_level != null ? `${assessment.anxiety_level}/5` : null} />

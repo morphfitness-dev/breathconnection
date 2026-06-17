@@ -15,6 +15,70 @@ async function requireAdmin(req, res, next) {
   next()
 }
 
+async function getProgrammeMap() {
+  const { data } = await supabaseAdmin
+    .from('programmes')
+    .select('id, name, description, color, week_count, is_custom')
+  return Object.fromEntries((data || []).map(p => [p.id, p]))
+}
+
+// GET /api/programmes — list all programmes (fixed + custom)
+router.get('/programmes', requireAuth, async (req, res) => {
+  const { data, error } = await supabaseAdmin
+    .from('programmes')
+    .select('id, name, description, color, week_count, is_custom')
+    .order('id', { ascending: true })
+  if (error) return res.status(500).json({ error: 'Failed to fetch programmes.' })
+  res.json(data)
+})
+
+// POST /api/admin/programmes — create a custom programme
+router.post('/admin/programmes', requireAuth, requireAdmin, async (req, res) => {
+  const { name, description, color, week_count } = req.body
+  if (!name) return res.status(400).json({ error: 'name is required.' })
+
+  const { data: maxRow } = await supabaseAdmin
+    .from('programmes')
+    .select('id')
+    .order('id', { ascending: false })
+    .limit(1)
+    .single()
+  const nextId = (maxRow?.id || 4) + 1
+
+  const { data, error } = await supabaseAdmin
+    .from('programmes')
+    .insert({
+      id: nextId,
+      name,
+      description: description || null,
+      color: color || '#0D5C63',
+      week_count: week_count || 8,
+      is_custom: true,
+      created_by: req.user.id,
+    })
+    .select()
+    .single()
+
+  if (error) return res.status(500).json({ error: 'Failed to create programme.' })
+  res.json(data)
+})
+
+// PATCH /api/admin/users/:id/programme — reassign a user to a (possibly custom) programme
+router.patch('/admin/users/:id/programme', requireAuth, requireAdmin, async (req, res) => {
+  const { programme_id } = req.body
+  if (!programme_id) return res.status(400).json({ error: 'programme_id is required.' })
+
+  const { data, error } = await supabaseAdmin
+    .from('user_assessments')
+    .update({ assigned_programme: programme_id })
+    .eq('user_id', req.params.id)
+    .select()
+    .single()
+
+  if (error) return res.status(500).json({ error: 'Failed to reassign programme. User may not have an assessment yet.' })
+  res.json(data)
+})
+
 router.get('/me', requireAuth, async (req, res) => {
   const { data: profile, error } = await supabaseAdmin
     .from('users_profile')
@@ -162,14 +226,6 @@ router.post('/assessment', requireAuth, async (req, res) => {
   res.json({ assigned_programme, pillar_weights })
 })
 
-// Programme metadata
-const PROGRAMMES = {
-  1: { name: 'HRV Optimisation', description: 'Rebuilding autonomic resilience through all three pillars' },
-  2: { name: 'Anxiety Management', description: 'Calming the nervous system through breath, posture, and chemistry' },
-  3: { name: 'Cardiovascular Endurance', description: 'Expanding aerobic capacity through breathing efficiency' },
-  4: { name: 'Sleep Improvement', description: 'Preparing the body and nervous system for deep, restorative rest' },
-}
-
 // GET /api/dashboard
 router.get('/dashboard', requireAuth, async (req, res) => {
   const userId = req.user.id
@@ -222,7 +278,8 @@ router.get('/dashboard', requireAuth, async (req, res) => {
 
   const lastCheckin = checkins?.[0] || null
 
-  const prog = PROGRAMMES[programmeId] || {}
+  const programmeMap = await getProgrammeMap()
+  const prog = programmeMap[programmeId] || {}
 
   res.json({
     programme_id: programmeId,
@@ -457,12 +514,7 @@ router.get('/progress', requireAuth, async (req, res) => {
     .gte('recorded_at', since90)
     .order('recorded_at', { ascending: true })
 
-  const PROGRAMMES = {
-    1: 'HRV Optimisation',
-    2: 'Anxiety Management',
-    3: 'Cardiovascular Endurance',
-    4: 'Sleep Improvement',
-  }
+  const programmeMap = await getProgrammeMap()
 
   res.json({
     bolt_scores: allBoltScores,
@@ -471,7 +523,7 @@ router.get('/progress', requireAuth, async (req, res) => {
     biometrics: biometrics || [],
     programme: {
       id: programmeId,
-      name: PROGRAMMES[programmeId] || `Programme ${programmeId}`,
+      name: programmeMap[programmeId]?.name || `Programme ${programmeId}`,
       assigned_at: assessment.created_at,
       current_phase: currentPhase,
       current_week: currentWeek,
@@ -623,7 +675,7 @@ router.get('/admin/users', requireAuth, requireAdmin, async (req, res) => {
     .gte('created_at', since30)
     .order('created_at', { ascending: true })
 
-  const ADMIN_PROGRAMMES = { 1: 'HRV Optimisation', 2: 'Anxiety Management', 3: 'Cardiovascular Endurance', 4: 'Sleep Improvement' }
+  const ADMIN_PROGRAMMES = Object.fromEntries(Object.entries(await getProgrammeMap()).map(([id, p]) => [id, p.name]))
 
   const sessionMap = Object.fromEntries((allSessions || []).map(s => [s.id, s]))
   const assessmentMap = Object.fromEntries((assessments || []).map(a => [a.user_id, a]))
@@ -834,7 +886,7 @@ router.get('/admin/export', requireAuth, requireAdmin, async (req, res) => {
   const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   const { data: recentCheckins } = await supabaseAdmin.from('user_checkins').select('user_id, wellbeing_score').gte('created_at', since7)
 
-  const EXPORT_PROGRAMMES = { 1: 'HRV Optimisation', 2: 'Anxiety Management', 3: 'Cardiovascular Endurance', 4: 'Sleep Improvement' }
+  const EXPORT_PROGRAMMES = Object.fromEntries(Object.entries(await getProgrammeMap()).map(([id, p]) => [id, p.name]))
   const assessmentMap = Object.fromEntries((assessments || []).map(a => [a.user_id, a]))
   const completionsByUser = {}
   for (const c of (allCompletions || [])) {

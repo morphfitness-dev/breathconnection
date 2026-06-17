@@ -18,6 +18,7 @@ const STATUS_BADGE = {
 
 export default function AdminLibraryPage() {
   const [sessions, setSessions] = useState([])
+  const [programmes, setProgrammes] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [tab, setTab] = useState('all')
@@ -45,7 +46,18 @@ export default function AdminLibraryPage() {
     }
   }
 
-  useEffect(() => { fetchVideos() }, [])
+  async function fetchProgrammes() {
+    const token = await getToken()
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/programmes`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setProgrammes(Object.fromEntries(data.map(p => [p.id, p.name])))
+    }
+  }
+
+  useEffect(() => { fetchVideos(); fetchProgrammes() }, [])
 
   const filtered = sessions.filter(s => {
     if (tab !== 'all' && s.pillar !== tab) return false
@@ -129,7 +141,7 @@ export default function AdminLibraryPage() {
                   </span>
                   <p className="font-sans text-sm font-medium text-gray-800 line-clamp-2 mb-1">{s.title}</p>
                   <p className="font-sans text-xs text-gray-400 mb-3">
-                    {s.programme_id > 0 ? `Programme ${s.programme_id} · Week ${s.week} · Session ${s.session_number}` : 'Unassigned'}
+                    {s.programme_id > 0 ? `${programmes[s.programme_id] || `Programme ${s.programme_id}`} · Week ${s.week} · Session ${s.session_number}` : 'Unassigned'}
                   </p>
                   <div className="flex items-center gap-1.5 mb-3">
                     <span className={`w-2 h-2 rounded-full ${badge.dot}`} />

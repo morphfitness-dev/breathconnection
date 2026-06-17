@@ -1,12 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 
-const PROGRAMMES = {
-  1: { name: 'HRV Optimisation', color: '#0F4C81' },
-  2: { name: 'Anxiety Management', color: '#6B21A8' },
-  3: { name: 'Cardiovascular Endurance', color: '#166534' },
-  4: { name: 'Sleep Improvement', color: '#1E3A5F' },
-}
+const NEW_PROGRAMME_COLORS = ['#0F4C81', '#6B21A8', '#166534', '#1E3A5F', '#9D174D', '#92400E', '#3730A3', '#065F46']
 
 const PILLAR_INFO = {
   biomechanics: { label: 'Biomechanics', color: '#3B82F6' },
@@ -17,6 +12,7 @@ const PILLAR_INFO = {
 
 export default function AdminProgrammeBuilderPage() {
   const [sessions, setSessions] = useState([])
+  const [programmes, setProgrammes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
@@ -25,6 +21,9 @@ export default function AdminProgrammeBuilderPage() {
   const [dragId, setDragId] = useState(null)
   const [overSlot, setOverSlot] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [showNewForm, setShowNewForm] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newWeeks, setNewWeeks] = useState(8)
 
   async function getToken() {
     const { data } = await supabase.auth.getSession()
@@ -46,7 +45,40 @@ export default function AdminProgrammeBuilderPage() {
     }
   }
 
-  useEffect(() => { fetchSessions() }, [])
+  async function fetchProgrammes() {
+    const token = await getToken()
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/programmes`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res.ok) setProgrammes(await res.json())
+  }
+
+  useEffect(() => { fetchSessions(); fetchProgrammes() }, [])
+
+  async function handleCreateProgramme() {
+    if (!newName.trim()) return
+    setSaving(true)
+    try {
+      const token = await getToken()
+      const color = NEW_PROGRAMME_COLORS[programmes.length % NEW_PROGRAMME_COLORS.length]
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/programmes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: newName.trim(), color, week_count: Number(newWeeks) || 8 }),
+      })
+      if (!res.ok) throw new Error('Failed to create programme')
+      const created = await res.json()
+      setProgrammes(p => [...p, created])
+      setActiveProgramme(created.id)
+      setShowNewForm(false)
+      setNewName('')
+      setNewWeeks(8)
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const sidebarSessions = useMemo(() => sessions.filter(s => {
     if (pillarFilter !== 'all' && s.pillar !== pillarFilter) return false
@@ -54,8 +86,10 @@ export default function AdminProgrammeBuilderPage() {
     return true
   }), [sessions, pillarFilter, search])
 
+  const activeProgrammeObj = programmes.find(p => p.id === activeProgramme)
+  const weekCount = activeProgrammeObj?.week_count || 8
   const canvasSessions = sessions.filter(s => s.programme_id === activeProgramme)
-  const weekSlots = Array.from({ length: 8 }, (_, i) => i + 1).map(week => ({
+  const weekSlots = Array.from({ length: weekCount }, (_, i) => i + 1).map(week => ({
     week,
     session: canvasSessions.find(s => s.week === week) || null,
   }))
@@ -200,18 +234,57 @@ export default function AdminProgrammeBuilderPage() {
           {/* Canvas */}
           <div>
             {/* Programme tabs */}
-            <div className="flex gap-2 mb-4 flex-wrap">
-              {Object.entries(PROGRAMMES).map(([id, p]) => (
+            <div className="flex gap-2 mb-4 flex-wrap items-center">
+              {programmes.map(p => (
                 <button
-                  key={id}
-                  onClick={() => setActiveProgramme(Number(id))}
-                  className={`font-sans text-sm px-4 py-1.5 rounded-full transition-colors ${activeProgramme === Number(id) ? 'text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#0D5C63]'}`}
-                  style={activeProgramme === Number(id) ? { backgroundColor: p.color } : {}}
+                  key={p.id}
+                  onClick={() => setActiveProgramme(p.id)}
+                  className={`font-sans text-sm px-4 py-1.5 rounded-full transition-colors ${activeProgramme === p.id ? 'text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#0D5C63]'}`}
+                  style={activeProgramme === p.id ? { backgroundColor: p.color } : {}}
                 >
-                  {p.name}
+                  {p.name}{p.is_custom ? ' ✦' : ''}
                 </button>
               ))}
+              <button
+                onClick={() => setShowNewForm(s => !s)}
+                className="font-sans text-sm px-4 py-1.5 rounded-full border border-dashed border-gray-300 text-gray-500 hover:border-[#0D5C63] hover:text-[#0D5C63] transition-colors"
+              >
+                + New Programme
+              </button>
             </div>
+
+            {showNewForm && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 flex gap-3 flex-wrap items-end">
+                <div>
+                  <label className="block font-sans text-xs text-gray-400 uppercase tracking-wider mb-1">Programme Name</label>
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    placeholder="e.g. Travel Recovery"
+                    className="font-sans text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0D5C63]/30 w-56"
+                  />
+                </div>
+                <div>
+                  <label className="block font-sans text-xs text-gray-400 uppercase tracking-wider mb-1">Weeks</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="52"
+                    value={newWeeks}
+                    onChange={e => setNewWeeks(e.target.value)}
+                    className="font-sans text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0D5C63]/30 w-20"
+                  />
+                </div>
+                <button
+                  onClick={handleCreateProgramme}
+                  disabled={saving || !newName.trim()}
+                  className="bg-[#0D5C63] text-white font-sans text-sm font-medium px-4 py-2 rounded-lg hover:bg-[#094a50] transition-colors disabled:opacity-50"
+                >
+                  Create
+                </button>
+              </div>
+            )}
 
             {/* Stats */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 flex gap-6 flex-wrap">
