@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Breath Connection — What to Expect in 8 Weeks</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal:    #1D9E75;
+  --teal-l:  #E1F5EE;
+  --teal-d:  #085041;
+  --purple:  #7F77DD;
+  --purp-l:  #EEEDFE;
+  --purp-d:  #3C3489;
+  --coral:   #D85A30;
+  --coral-l: #FAECE7;
+  --coral-d: #712B13;
+  --blue:    #378ADD;
+  --blue-l:  #E6F1FB;
+  --blue-d:  #0C447C;
+  --bg:      #F5F3EE;
+  --surface: #FFFFFF;
+  --border:  rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.13);
+  --text:    #1C1C1A;
+  --text2:   #555550;
+  --text3:   #99998F;
+  --r:       12px;
+  --rl:      18px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.65;min-height:100vh;}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Lora',serif;font-size:19px;color:var(--text);letter-spacing:-0.2px;}
+.logo em{color:var(--teal);font-style:normal;}
+.header-pill{font-size:11px;font-weight:600;background:var(--teal-l);color:var(--teal-d);padding:4px 10px;border-radius:20px;letter-spacing:0.3px;}
+
+/* HERO */
+.hero{background:var(--surface);border-bottom:1px solid var(--border);padding:40px 28px 36px;text-align:center;}
+.hero h1{font-family:'Lora',serif;font-size:34px;font-weight:600;line-height:1.2;letter-spacing:-0.5px;margin-bottom:12px;color:var(--text);}
+.hero h1 em{color:var(--teal);font-style:italic;}
+.hero p{font-size:15px;color:var(--text2);max-width:580px;margin:0 auto 24px;line-height:1.75;}
+.hero-steps{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;}
+.hero-step{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--border2);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text2);}
+.hero-step .snum{width:20px;height:20px;border-radius:50%;background:var(--text2);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+main{max-width:960px;margin:0 auto;padding:32px 20px 80px;}
+
+/* PROGRAMME CARDS */
+.section-label{font-size:12px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;}
+.prog-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:32px;}
+.prog-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--rl);padding:18px 14px 14px;cursor:pointer;transition:all 0.18s;text-align:left;position:relative;}
+.prog-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.07);}
+.prog-card.active{border-width:2px;}
+.prog-icon{font-size:28px;margin-bottom:10px;display:block;line-height:1;}
+.prog-card-name{font-family:'Lora',serif;font-size:16px;font-weight:600;line-height:1.2;margin-bottom:6px;}
+.prog-card-goal{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:10px;}
+.prog-card-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;}
+
+/* WHO IS THIS FOR */
+.for-banner{border-radius:var(--r);padding:14px 18px;margin-bottom:24px;font-size:14px;line-height:1.6;display:flex;gap:12px;align-items:flex-start;}
+.for-banner .for-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.for-banner strong{font-weight:700;}
+
+/* WHAT YOU'LL NOTICE */
+.notice-label{font-size:12px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+.notice-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:26px;}
+.notice-chip{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:7px 14px;border-radius:100px;border:2px solid var(--border2);background:var(--surface);cursor:pointer;transition:all 0.14s;white-space:nowrap;color:var(--text2);}
+.notice-chip .chip-icon{font-size:15px;}
+.notice-chip:hover{background:var(--bg);}
+.notice-chip.active{color:#fff;border-color:transparent;}
+
+/* SNAPSHOT CARDS */
+.snapshot-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.snap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;text-align:center;}
+.snap-icon{font-size:22px;margin-bottom:4px;}
+.snap-label{font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;}
+.snap-val{font-size:20px;font-weight:700;color:var(--text);line-height:1;}
+.snap-note{font-size:11px;margin-top:4px;font-weight:600;}
+
+/* CHART */
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:22px 20px 16px;margin-bottom:16px;}
+.chart-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:12px;flex-wrap:wrap;}
+.chart-headline{font-family:'Lora',serif;font-size:19px;font-weight:600;color:var(--text);line-height:1.2;}
+.chart-sub{font-size:13px;color:var(--text2);margin-top:4px;line-height:1.5;}
+.ci-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);}
+.ci-row input{cursor:pointer;}
+.chart-wrap{position:relative;width:100%;height:270px;margin:12px 0 8px;}
+.phase-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;}
+.phase-pip{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--text2);}
+.phase-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* WHAT'S HAPPENING PANEL */
+.explain-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:16px;}
+.explain-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);}
+.explain-eyebrow{font-size:11px;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;margin-bottom:6px;}
+.explain-title{font-family:'Lora',serif;font-size:18px;font-weight:600;line-height:1.3;color:var(--text);}
+.explain-body{padding:18px 20px;}
+.exercise-rows{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
+.ex-row{display:flex;gap:0;border-radius:var(--r);overflow:hidden;border:1px solid var(--border);}
+.ex-stripe{width:5px;flex-shrink:0;}
+.ex-inner{padding:12px 14px;flex:1;background:var(--bg);}
+.ex-week{font-size:10px;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
+.ex-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.ex-plain{font-size:13px;color:var(--text2);line-height:1.6;}
+.ex-feel{display:inline-flex;align-items:center;gap:5px;margin-top:7px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:6px;}
+
+.plain-summary{font-size:14px;color:var(--text2);line-height:1.75;padding:14px 0;border-top:1px solid var(--border);}
+.plain-summary strong{color:var(--text);font-weight:700;}
+
+.science-toggle{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text3);margin-top:12px;cursor:pointer;user-select:none;}
+.science-toggle input{cursor:pointer;}
+.science-note{font-size:11px;color:var(--text3);line-height:1.6;margin-top:8px;padding:10px 14px;background:var(--bg);border-radius:8px;border-left:3px solid var(--border2);display:none;}
+.science-note.show{display:block;}
+.science-note strong{color:var(--text2);font-weight:600;}
+
+/* REALITY CHECK */
+.reality{background:var(--teal-l);border-radius:var(--r);padding:14px 18px;margin-top:14px;font-size:13px;color:var(--teal-d);line-height:1.65;}
+.reality strong{font-weight:700;}
+
+@media(max-width:680px){
+  .prog-grid{grid-template-columns:1fr 1fr;}
+  .snapshot-row{grid-template-columns:1fr 1fr;}
+  header{padding:12px 16px;}
+  main{padding:20px 14px 60px;}
+  .hero{padding:28px 16px 24px;}
+  .hero h1{font-size:26px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">The Breath<em>Connection</em></div>
+  <div class="header-pill">8-week results guide</div>
+</header>
+
+<div class="hero">
+  <h1>See what <em>actually changes</em><br>when you breathe better</h1>
+  <p>Pick a programme below, then explore what you'll notice — in your body, your energy, your sleep, and your stress levels — week by week over 8 weeks of practice.</p>
+  <div class="hero-steps">
+    <div class="hero-step"><div class="snum">1</div>Choose your programme</div>
+    <div class="hero-step"><div class="snum">2</div>Pick what you want to track</div>
+    <div class="hero-step"><div class="snum">3</div>See what changes and why</div>
+  </div>
+</div>
+
+<main>
+  <div class="section-label">Choose your programme</div>
+  <div class="prog-grid" id="progGrid"></div>
+
+  <div class="for-banner" id="forBanner"></div>
+
+  <div class="notice-label">What do you want to track?</div>
+  <div class="notice-chips" id="chips"></div>
+
+  <div class="snapshot-row" id="snapRow"></div>
+
+  <div class="chart-card">
+    <div class="chart-top">
+      <div>
+        <div class="chart-headline" id="chartHead"></div>
+        <div class="chart-sub" id="chartSub"></div>
+      </div>
+      <label class="ci-row"><input type="checkbox" id="ciChk" checked> Show typical range</label>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="MC" role="img" aria-label="Line chart showing 8-week progress for selected metric">8-week progress chart.</canvas>
+    </div>
+    <div class="phase-row" id="phaseRow"></div>
+  </div>
+
+  <div class="explain-card" id="explainCard">
+    <div class="explain-head">
+      <div class="explain-eyebrow" id="explainEye"></div>
+      <div class="explain-title" id="explainTitle"></div>
+    </div>
+    <div class="explain-body">
+      <div class="exercise-rows" id="exRows"></div>
+      <div class="plain-summary" id="plainSum"></div>
+      <div class="reality" id="realityCheck"></div>
+      <label class="science-toggle"><input type="checkbox" id="sciChk"> Show the science behind this</label>
+      <div class="science-note" id="sciNote"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+var PC=['#1D9E75','#7F77DD','#D85A30','#378ADD'];
+var PROGS=[
+{name:'Stress & Calm',icon:'🧘',col:'#1D9E75',colL:'#E1F5EE',colD:'#085041',
+ goal:'Reduce daily stress, feel calmer, and build genuine resilience',
+ forWho:'Best for you if: you feel wired and tired, struggle to switch off, get tension headaches, or just want to feel more settled in your body day-to-day.',
+ phases:[{l:'Weeks 1–2: Learning to breathe fully',w:[0,2],c:'#9FE1CB'},{l:'Weeks 3–4: CO₂ training',w:[2,4],c:'#5DCAA5'},{l:'Weeks 5–6: Deep coherence',w:[4,6],c:'#1D9E75'},{l:'Weeks 7–8: It becomes automatic',w:[6,8],c:'#085041'}],
+ metrics:[
+  {icon:'💓',label:'Heart resilience',sublabel:'How well your heart adapts to stress',
+   head:'Your heart gets better at bouncing back',sub:'A resilient heart speeds up and slows down fluidly — this is what\'s being measured here. Higher is healthier.',
+   v:[40,41,43,44,46,48,49,51,52],ci:[3,3,3.5,3.5,4,4,4.5,4.5,5],u:'ms',dir:1,
+   startTxt:'Typical starting point',endTxt:'After 8 weeks',
+   feel:'Most people notice this as feeling less rattled by stressful moments — your heart stops "jumping" at small triggers.',
+   exercises:[
+    {week:'Weeks 1–2',name:'90/90 breathing reset (10 min, twice a day)',plain:'You lie on your back with your legs up — a position that completely removes postural tension from your body. Breathing here gently wakes up your diaphragm, the muscle responsible for calming your nervous system. Think of it as rebooting the hardware before running the software.',feel:'Immediate relaxation. Many people feel tension drain from their chest and shoulders within the first session.',feelCol:'#E1F5EE',feelTxt:'#085041'},
+    {week:'Weeks 3–4',name:'Breath hold training (8 holds of 5–15 seconds)',plain:'After a gentle exhale, you hold your breath for a few seconds. This trains your body to stop over-reacting to carbon dioxide — most stressed people breathe way too much, keeping their nervous system in a mild panic state 24/7. These holds recalibrate that alarm system.',feel:'By Week 4, the constant background hum of anxiety often drops noticeably.',feelCol:'#E1F5EE',feelTxt:'#085041'},
+    {week:'Weeks 5–6',name:'Coherent breathing at 5.5 breaths per minute (10 min)',plain:'Breathing at exactly 5.5 breaths per minute syncs your heart rhythm with your nervous system — like tuning two instruments to play in harmony. This is the most researched breathing rate for heart resilience. Your heart variability spikes during these sessions and, over weeks, your baseline rises permanently.',feel:'After a few sessions, many people describe this as the most physically calm they\'ve felt in years.',feelCol:'#E1F5EE',feelTxt:'#085041'}
+   ],
+   summary:'Your heart\'s resilience score improves because your nervous system is learning to spend more time in its calm, restorative mode. Each exercise removes a different barrier — Week 1 frees up your breathing mechanics, Week 3 resets your stress chemistry, and Week 5 trains your heart directly. By Week 8, <strong>your heart is 30% more resilient</strong> — meaning stress affects you less and you recover from it faster.',
+   reality:'You won\'t see this on a fitness tracker in real-time — but you\'ll feel it as greater emotional steadiness and faster recovery after difficult conversations, bad commutes, or stressful days at work.',
+   sci:'Science name: RMSSD (root mean square of successive differences). Laborde 2022 meta-analysis, n=848, effect size 0.90–1.11. Lin et al. 2014 established 5.5 BPM as the optimal resonance frequency for RMSSD maximisation. Expected +25–35% at 8 weeks.'},
+  {icon:'😤',label:'Stress hormone levels',sublabel:'How much cortisol your body is producing',
+   head:'Your stress hormones come down',sub:'Cortisol is your main stress hormone. Chronically high levels cause exhaustion, weight gain, poor sleep, and irritability. This shows your relative levels across 8 weeks — lower is better.',
+   v:[100,99,95,92,88,85,82,80,78],ci:[5,5,5,5,5,5,5,5,5],u:'% of start',dir:-1,
+   startTxt:'Your starting level (100%)',endTxt:'After 8 weeks (~78%)',
+   feel:'Lower cortisol feels like: sleeping through the night, not snapping at small things, having energy in the afternoon instead of crashing.',
+   exercises:[
+    {week:'Weeks 1–2',name:'Diaphragmatic breathing (10 min, twice daily)',plain:'Every time you breathe with your diaphragm instead of your chest, your brain receives a direct signal to stop producing stress hormones. Just 10 minutes of this twice a day measurably reduces cortisol — this has been confirmed in clinical studies. Think of it as pressing the "off" switch on your stress response, twice a day, every day.',feel:'Noticeable calm within the first week. Many people feel afternoon energy crashes reduce.',feelCol:'#E1F5EE',feelTxt:'#085041'},
+    {week:'Weeks 5–6',name:'Left-nostril breathing (10 min)',plain:'Breathing exclusively through your left nostril activates the calming side of your brain. This sounds strange but is well-documented: each nostril connects to a different side of your nervous system. Left nostril = parasympathetic = calm. This exercise produces more acute cortisol reduction per session than any other in the programme.',feel:'Most people feel a noticeable wave of calm within 3–5 minutes. It\'s the most potent single exercise for acute stress relief.',feelCol:'#E1F5EE',feelTxt:'#085041'}
+   ],
+   summary:'Your cortisol comes down because you\'re spending more time each day with your nervous system in "rest and restore" mode. Two daily sessions is the minimum threshold for cumulative HPA axis adaptation — meaning the brain\'s stress control centre physically recalibrates over weeks. By Week 8, <strong>cortisol is running at about 78% of where it started</strong> — a genuine biochemical change, not just feeling calmer.',
+   reality:'You\'ll feel this as better sleep, less afternoon exhaustion, fewer "stressed for no reason" moments, and a general sense that things that used to wind you up just... don\'t as much.',
+   sci:'Ma et al. 2017 Front Psychol (F=9.06, p<0.001 for salivary cortisol reduction with diaphragmatic breathing). Maniaci 2024 pilot RCT. Koeder 2022 HPA axis adaptation. Expected −20–25% afternoon cortisol AUC at Week 8.'},
+  {icon:'🫁',label:'Breathing rate',sublabel:'How many breaths per minute at rest',
+   head:'You breathe less — and feel better for it',sub:'Most stressed people breathe too fast, keeping their body in a low-level stress state. Slower breathing at rest is one of the strongest indicators of nervous system health.',
+   v:[16,15.5,14.5,14,13,12.5,12,11.5,11],ci:[1,1,1,1,1,1,1,1,1],u:'breaths/min',dir:-1,
+   startTxt:'Typical stressed adult',endTxt:'After 8 weeks (target)',
+   feel:'Slower breathing feels like less background tension — the low-level "hum" of anxiety that many people have lived with so long they\'ve forgotten it\'s not normal.',
+   exercises:[
+    {week:'Weeks 1–4',name:'Nasal breathing all day (lifestyle change)',plain:'Switching from mouth to nose breathing raises your CO₂ levels throughout the day. This actually trains your body to stop demanding breath as frequently. It sounds counterintuitive — less air feels wrong at first — but within 2 weeks, your breathing slows naturally and the baseline anxiety it was causing reduces. This is the single biggest habit change in the entire programme.',feel:'Many people notice they\'re no longer "sighing" constantly or taking random big gulps of air.',feelCol:'#E1F5EE',feelTxt:'#085041'},
+    {week:'Weeks 5–6',name:'Coherent breathing at 5.5 breaths/min (10 min/day)',plain:'Daily practice at this slower rate trains the body to accept it as normal. By Week 6, most people breathe at 11–12 breaths per minute without thinking about it — their body has adopted the slower rhythm as its new default.',feel:'The body feels quieter. Less physical tension, less restlessness.',feelCol:'#E1F5EE',feelTxt:'#085041'}
+   ],
+   summary:'Most adults breathe 14–18 times per minute. Optimal is 8–12. The gap matters: faster breathing keeps your CO₂ low, which keeps your nervous system in a mild "something is wrong" state all day. <strong>Slowing to 11 breaths per minute by Week 8</strong> removes this constant background stress signal.',
+   reality:'This is one of the first changes people notice. By Week 3–4, friends and family often comment that you seem calmer — even before you feel it yourself.',
+   sci:'Vagedes et al. 2024 Buteyko RCT (Eur J Med Res, n=60). McKeown Oxygen Advantage norms. Target <12 BPM at rest. CO₂ chemoreceptor recalibration is the primary mechanism.'},
+  {icon:'🧠',label:'Mental calmness (EEG alpha)',sublabel:'Brain wave activity associated with relaxed focus',
+   head:'Your brain spends more time in its calm zone',sub:'Alpha waves are what your brain produces when you\'re relaxed but alert — the opposite of anxious or scattered. This shows your alpha activity increasing over 8 weeks.',
+   v:[100,103,108,112,118,124,128,132,135],ci:[4,4,5,5,6,6,7,7,8],u:'% of start',dir:1,
+   startTxt:'Your starting level',endTxt:'After 8 weeks (+35%)',
+   feel:'Higher alpha activity feels like: thoughts flowing rather than racing, being able to read or focus without effort, feeling present rather than anxious.',
+   exercises:[
+    {week:'Weeks 5–6',name:'Coherent breathing at 5.5 BPM (10 min)',plain:'Slow rhythmic breathing at this specific rate entrains your brainwaves — like tuning a radio signal. The vagus nerve sends rhythmic pulses to the brain that nudge it toward alpha frequency. This is the main driver of the alpha increase, particularly in the back of the brain where visual and sensory processing lives.',feel:'During sessions: a distinctive sense of mental spaciousness. Between sessions (by Week 6): a calmer default mental state.',feelCol:'#E1F5EE',feelTxt:'#085041'},
+    {week:'Weeks 5–6',name:'Alternate nostril breathing — Nadi Shodhana (10 min)',plain:'Alternating which nostril you breathe through balances left and right brain activity. The left nostril activates the right (calming) hemisphere; the right nostril activates the left. Full alternate nostril practice balances both, producing the symmetrical alpha that reflects a calm, centred mind.',feel:'Very noticeable during practice — a sense of mental balance and quiet that many people find surprising.',feelCol:'#E1F5EE',feelTxt:'#085041'}
+   ],
+   summary:'Alpha brain waves are the neurological signature of the state this programme is designed to produce: calm, resilient, and present. They\'re suppressed by anxiety and stress. <strong>A 35% increase in alpha activity by Week 8</strong> reflects a genuine change in your brain\'s default state — not just temporary relaxation.',
+   reality:'You can\'t measure this at home without an EEG device, but you\'ll notice it as the difference between a mind that races and one that flows. Improved focus, less mental chatter, and the ability to actually relax.',
+   sci:'Zaccaro et al. 2018 systematic review. Cheng et al. 2018 RCT. Werntz et al. 1983 (nostril/hemisphere laterality). PLOS One 2024 neural/cardiorespiratory slow breathing responses. 15–35% alpha increase during sessions with partial carry-over at rest.'},
+  {icon:'❤️',label:'Blood pressure',sublabel:'Systolic (top) number in mmHg',
+   head:'Your blood pressure edges down',sub:'Even a small reduction in blood pressure meaningfully reduces long-term cardiovascular risk. This shows the typical trajectory for a healthy adult doing this programme.',
+   v:[122,122,121,121,120,120,119,119,118],ci:[3,3,3,3,3,3,3,3,3],u:'mmHg',dir:-1,
+   startTxt:'Starting blood pressure',endTxt:'After 8 weeks',
+   feel:'You probably won\'t feel a 4 mmHg drop — but it\'s meaningful for long-term heart health, and the mechanisms driving it (more nasal NO, less stress hormones) will produce feelings you do notice.',
+   exercises:[
+    {week:'All 8 weeks',name:'Nasal breathing (continuous)',plain:'Your nose produces nitric oxide — a gas that relaxes and widens your blood vessels. Mouth breathing bypasses this completely. Simply switching to nasal breathing delivers 4–6 times more of this natural vasodilator to your body on every breath, gradually lowering the resistance your heart has to pump against.',feel:'No direct sensation — but the reduced stress hormones and better circulation contribute to feeling more energised.',feelCol:'#E1F5EE',feelTxt:'#085041'},
+    {week:'Weeks 5–6',name:'Coherent breathing + alternate nostril (20 min total)',plain:'Improving baroreflex sensitivity — your body\'s built-in blood pressure regulation system — is the main mechanism here. These exercises have been shown to double baroreflex sensitivity in some studies, meaning your body becomes much better at self-correcting blood pressure spikes in real time.',feel:'Fewer sudden stress-related headaches or flushing sensations.',feelCol:'#E1F5EE',feelTxt:'#085041'}
+   ],
+   summary:'The blood pressure reduction in this programme comes from three simultaneous mechanisms: nasal nitric oxide widening blood vessels, stress hormones reducing (less vessel constriction), and the baroreflex system becoming more efficient. <strong>For healthy adults, a 4 mmHg reduction at Week 8 is typical</strong>; people starting higher can see much more.',
+   reality:'If you have high blood pressure, this programme is worth taking seriously as a complementary approach — but don\'t adjust medication without speaking to your doctor. Always monitor with a cuff, not by feel.',
+   sci:'Joseph et al. 2005 AHA Hypertension (−8.6/−4.9 mmHg acute in hypertensives; BRS 5.8→10.3 ms/mmHg). Vanderbilt 12-wk RCT: −2.4 mmHg normotensives. Brandani 2023 Front Physiol scoping review (−4 to −54 mmHg range across hypertension trials). Lundberg 1995 nasal NO data.'},
+ ]
+},
+
+{name:'Anxiety Relief',icon:'🌊',col:'#7F77DD',colL:'#EEEDFE',colD:'#3C3489',
+ goal:'Break the cycle of anxiety, panic, and hyperventilation',
+ forWho:'Best for you if: you experience regular anxiety, panic attacks, a tight chest, racing thoughts, or that constant feeling of waiting for something bad to happen.',
+ phases:[{l:'Weeks 1–2: Breaking the panic pattern',w:[0,2],c:'#CECBF6'},{l:'Weeks 3–4: Resetting the chemistry',w:[2,4],c:'#AFA9EC'},{l:'Weeks 5–6: Rewiring the brain',w:[4,6],c:'#7F77DD'},{l:'Weeks 7–8: New normal',w:[6,8],c:'#534AB7'}],
+ metrics:[
+  {icon:'😰',label:'Anxiety level',sublabel:'Self-reported anxiety (lower is better)',
+   head:'Your anxiety score drops steadily',sub:'This reflects overall anxiety levels on a standard 0–10 scale. The improvement comes from multiple angles — your chemistry, your nervous system, and your thinking patterns all shift.',
+   v:[7,6.8,6.2,5.8,5.2,4.8,4.5,4.2,4],ci:[0.8,0.8,0.8,0.8,0.8,0.8,0.8,0.8,0.8],u:'/10',dir:-1,
+   startTxt:'Typical anxiety score at start',endTxt:'After 8 weeks',
+   feel:'From "this is just how I am" to having genuine tools that work — and noticing that anxiety triggers no longer spiral the way they used to.',
+   exercises:[
+    {week:'Weeks 1–2',name:'Lying-down diaphragmatic breathing (10 min)',plain:'Anxiety lives in the chest — shallow, rapid upper-chest breathing physically sustains it. Lying on your back and breathing with your belly instead immediately interrupts the anxiety cycle at its physical root. Most people notice a 1–2 point anxiety drop within the first three sessions. This is the fastest-acting exercise in the programme — and it works because anxiety is partly a breathing pattern, not just a thought.',feel:'Immediate reduction in chest tightness and physical tension. Often the first time in years people have felt their ribcage actually relax.',feelCol:'#EEEDFE',feelTxt:'#3C3489'},
+    {week:'Weeks 3–4',name:'Reduced-volume nasal breathing (12 min — "comfortable air shortage")',plain:'Here\'s the part most people don\'t know: anxiety and hyperventilation form a loop. When you\'re anxious, you breathe too much. Over-breathing lowers CO₂, which causes dizziness, tingling, and chest tightness — symptoms the brain reads as more danger, making anxiety worse. This exercise gently raises CO₂ by breathing slightly less than feels comfortable. Within 2–3 weeks, the physical symptoms of anxiety (tingling, breathlessness, pounding heart) reduce dramatically because their chemical driver has been corrected.',feel:'The physical symptoms of anxiety — chest tightness, tingling, feeling breathless despite "enough air" — reduce noticeably by Week 4.',feelCol:'#EEEDFE',feelTxt:'#3C3489'},
+    {week:'Weeks 5–6',name:'Left-nostril breathing (10 min daily)',plain:'Your left nostril connects to the calm, creative right hemisphere of your brain. Breathing exclusively through it for 10 minutes directly shifts your brain state away from the anxious, threat-hypervigilant left-hemisphere mode. Clinical trials by neuroscientist David Shannahoff-Khalsa showed significant anxiety symptom reduction after just one week of daily practice. Most people find this the single most powerful calming exercise in the programme.',feel:'A measurable shift into calm within 5–7 minutes — most users describe it as the anxiety "draining out" of their chest.',feelCol:'#EEEDFE',feelTxt:'#3C3489'},
+    {week:'Weeks 5–6',name:'Box breathing (4-4-4-4) — for real-world moments',plain:'Four seconds in, four seconds hold, four seconds out, four seconds hold. Box breathing is your portable anxiety toolkit. Practised daily in formal sessions, it becomes automatic — activating in real-world anxiety triggers before you consciously decide to use it. It works by suppressing the sympathetic nervous system burst that causes anxiety to spike. Keep using it outside sessions: before difficult conversations, in waiting rooms, before presentations.',feel:'2–3 point immediate drop in acute anxiety. By Week 6, triggers don\'t escalate the way they used to.',feelCol:'#EEEDFE',feelTxt:'#3C3489'}
+   ],
+   summary:'Anxiety reduces in three stages: first the physical symptoms improve (Weeks 1–4) as breathing chemistry corrects; then the brain state shifts (Weeks 5–6) as left-nostril and extended exhale exercises directly change your neurological pattern; finally the skills generalise to real life (Weeks 7–8) so anxiety triggers are met with regulation rather than escalation. <strong>Starting at 7/10, most people reach 4/10 by Week 8</strong> — a genuine, lasting change.',
+   reality:'Results vary by starting point and how consistently you practice. People with severe or clinical anxiety should use this as a complement to professional support, not a replacement. That said — these are real tools that work for most people.',
+   sci:'Goessl et al. 2017 meta-analysis (n=484, Hedges g=0.81 for anxiety reduction). Bentley 2023 Brain Sciences. Shannahoff-Khalsa 2004 J Alt Complement Med. Vagedes 2024 Nijmegen p<0.05.'},
+  {icon:'😮‍💨',label:'Physical anxiety symptoms',sublabel:'Hyperventilation symptom score (lower is better)',
+   head:'The physical symptoms of anxiety fade',sub:'The Nijmegen score measures physical hyperventilation symptoms: chest tightness, breathlessness, tingling, dizziness. These are caused by over-breathing — and they\'re fixable. Score above 23 means significant hyperventilation is present.',
+   v:[28,27,25.5,24,22.5,21,20,19,18],ci:[2,2,2,2,2,2,2,2,2],u:'symptom score',dir:-1,
+   startTxt:'Above 23 = significant hyperventilation',endTxt:'After 8 weeks (score 18)',
+   feel:'Tingling in hands and face, feeling breathless despite getting enough air, chest tightness and heart pounding — these are what reduce. They\'re often mistaken for heart problems or serious illness.',
+   exercises:[
+    {week:'All 8 weeks',name:'Nasal breathing (all day, every day)',plain:'This is the single most important habit in Programme 2. Breathing through your nose raises CO₂ continuously throughout the day — and it\'s low CO₂ that causes almost every item on the Nijmegen symptom list. Most people drop below the hyperventilation threshold (score 23) within 4 weeks of consistent nasal breathing alone, before they\'ve even added the formal sessions.',feel:'Tingling, dizziness, and the feeling of "I can\'t get enough air" reduce noticeably within 2–3 weeks.',feelCol:'#EEEDFE',feelTxt:'#3C3489'},
+    {week:'Weeks 3–4',name:'Reduced-volume breathing (12 min — slightly less than comfortable)',plain:'The Buteyko method\'s core technique. Breathing 70% of your normal volume for 12 minutes recalibrates the alarm system that triggers hyperventilation symptoms. Vagedes et al. (2024) ran a clinical trial specifically measuring Nijmegen scores with this protocol — significant improvement (p<0.05) over 3 months. After 2 weeks, the symptoms occur less frequently and feel less severe because the chemical trigger is no longer being pulled.',feel:'Most people describe the shift as: "I noticed I wasn\'t doing that thing where I can\'t breathe properly anymore."',feelCol:'#EEEDFE',feelTxt:'#3C3489'}
+   ],
+   summary:'These physical symptoms are not "just anxiety in your head" — they are real biochemical events caused by low CO₂ from over-breathing. The exercises in Programme 2 correct the chemistry directly. <strong>A score drop from 28 to 18</strong> means most of the physical symptoms that were driving the anxiety cycle have been removed.',
+   reality:'If you\'ve been experiencing these symptoms for years and been told "it\'s just anxiety," this programme may be the most useful thing you\'ve ever tried. The symptoms have a mechanical cause and a mechanical fix.',
+   sci:'Vagedes et al. 2024 Eur J Med Res (NCT03098849, n=60, 3-month Buteyko RCT). Nijmegen Questionnaire: validated hyperventilation symptom measure. Score >23 = significant hyperventilation. Significant improvement vs usual care (p<0.05).'},
+  {icon:'🌬️',label:'Breathing rate',sublabel:'Breaths per minute at rest',
+   head:'Your breathing slows down — and stays slower',sub:'Anxious people typically breathe 16–22 times per minute. Optimal is 10–12. The gap between them is the physical engine of chronic anxiety.',
+   v:[17,16.5,16,15,14,13.5,13,12.5,12],ci:[1,1,1,1,1,1,1,1,1],u:'breaths/min',dir:-1,
+   startTxt:'Typical anxious adult (17/min)',endTxt:'After 8 weeks (12/min)',
+   feel:'At 12 breaths per minute, the biochemical conditions for panic are essentially removed. Most people describe this as the anxiety "having nowhere to live" in their body.',
+   exercises:[
+    {week:'Weeks 1–2',name:'Belly breathing lying down (10 min)',plain:'Anxiety breathing is characteristically upper-chest and fast. Even one 10-minute session of belly breathing in a lying position immediately drops breathing rate by 2–4 breaths per minute by removing the postural drivers of chest breathing. The lower rate then begins to persist beyond the session after 2 weeks.',feel:'Immediate: the physical sensation of the breathing slowing is unmistakable. Within 2 weeks: the slower rate follows you into the day.',feelCol:'#EEEDFE',feelTxt:'#3C3489'},
+    {week:'Weeks 3–4',name:'Reduced-volume nasal breathing (12 min daily)',plain:'The most targeted intervention for rate reduction. Breathing less volume per minute directly trains the body to need fewer breaths. After 2 weeks, resting rate drops 2–3 breaths per minute as the body finds its new normal CO₂ balance.',feel:'A sense of the breathing becoming quieter and more invisible — less effortful.',feelCol:'#EEEDFE',feelTxt:'#3C3489'}
+   ],
+   summary:'Breathing rate is the most direct measurable indicator of your anxiety state. <strong>At 17 breaths per minute, anxiety is biochemically fuelled. At 12, it isn\'t.</strong> The goal isn\'t to consciously slow your breath — it\'s to retrain your body so that 12 breaths per minute becomes your new normal, requiring no effort.',
+   reality:'Track this yourself: count your breaths for 30 seconds at rest (before getting up in the morning) and multiply by 2. Do this weekly from Week 1. Watching this number fall is one of the most motivating parts of the programme.',
+   sci:'Vagedes 2024 Buteyko RCT. McKeown Oxygen Advantage. Target: <12 BPM at rest. CO₂ chemoreceptor recalibration primary mechanism. Most anxious adults start 16–22 BPM.'},
+  {icon:'😴',label:'Stress hormones (cortisol)',sublabel:'Daily cortisol production — lower is better',
+   head:'Your stress chemistry rebalances',sub:'Anxiety keeps cortisol elevated, which keeps the nervous system primed for threat, which produces more anxiety. This programme breaks the loop.',
+   v:[100,99,96,92,88,84,80,77,75],ci:[5,5,5,5,5,5,5,5,5],u:'% of start',dir:-1,
+   startTxt:'Starting cortisol level (100%)',endTxt:'After 8 weeks (~75%)',
+   feel:'Lower cortisol: sleeping through the night, not waking with a sense of dread, having energy without the constant background tension.',
+   exercises:[
+    {week:'Weeks 1–2',name:'Diaphragmatic breathing (twice daily, 10 min)',plain:'Even a single session reduces salivary cortisol. The mechanism is direct: deep belly breathing sends a signal through the vagus nerve to your hypothalamus — the brain\'s stress control centre — telling it to reduce cortisol production. Two sessions per day compounds this effect across 8 weeks into a genuine biochemical change.',feel:'Week 1–2: calmer evenings. Week 4+: waking up without the immediate sense of anxiety.',feelCol:'#EEEDFE',feelTxt:'#3C3489'},
+    {week:'Weeks 5–6',name:'Left-nostril breathing (10 min) — most cortisol-reducing exercise',plain:'Left-nostril breathing produces the steepest acute cortisol drop of any exercise in the programme. The right hemisphere it activates directly inhibits the adrenal system. One 10-minute session can drop cortisol by 10–25% measurably. Done daily for 2 weeks, this resets the setpoint lower.',feel:'Most powerful single exercise for people who feel "flooded" by stress. The calm it produces is quite physical.',feelCol:'#EEEDFE',feelTxt:'#3C3489'}
+   ],
+   summary:'Anxiety and cortisol have a two-way relationship — each drives the other. This programme breaks the cycle from the bottom up: correct the breathing → reduce the chemical anxiety symptoms → calm the nervous system → lower the cortisol. By Week 8, <strong>cortisol is running at about 75% of its starting level</strong> — a genuine biochemical reset.',
+   reality:'You\'ll feel this most clearly as the difference in how you wake up. High cortisol means waking already tense, anxious, or in problem-solving mode. Lower cortisol means waking gradually, calmly, with a moment before the day starts.',
+   sci:'Ma et al. 2017 Front Psychol (F=9.06 p<0.001). Maniaci 2024 pilot RCT. Acute −10–25% per session; chronic −15–25% afternoon AUC at Week 8.'},
+ ]
+},
+
+{name:'Athletic Performance',icon:'🏃',col:'#D85A30',colL:'#FAECE7',colD:'#712B13',
+ goal:'Breathe more efficiently, recover faster, and push harder',
+ forWho:'Best for you if: you want to improve your endurance, reduce breathlessness during exercise, recover faster between sessions, or simply feel less winded during physical activity.',
+ phases:[{l:'Weeks 1–2: Nasal mechanics',w:[0,2],c:'#F5C4B3'},{l:'Weeks 3–4: CO₂ tolerance',w:[2,4],c:'#F0997B'},{l:'Weeks 5–6: Altitude simulation',w:[4,6],c:'#D85A30'},{l:'Weeks 7–8: Recovery mastery',w:[6,8],c:'#712B13'}],
+ metrics:[
+  {icon:'⏱️',label:'Breathlessness threshold (BOLT)',sublabel:'Seconds before you feel the urge to breathe — higher is better',
+   head:'You get less breathless during exercise',sub:'The BOLT score measures how tolerant your body is to CO₂ — the gas that makes you feel breathless. A score of 16 means you feel breathless easily. A score of 27 means you can work much harder before hitting that wall.',
+   v:[16,17,18,19,21,23,24,26,27],ci:[2,2,2,2,2.5,2.5,3,3,3],u:'seconds',dir:1,
+   startTxt:'Starting score (16s = breathes easily)',endTxt:'After 8 weeks (27s)',
+   feel:'Every 5-second improvement in BOLT roughly corresponds to being able to sustain a faster pace comfortably. At 27 seconds, athletes describe exercise as feeling "effortless" at paces that used to cause heavy breathing.',
+   exercises:[
+    {week:'Weeks 1–2',name:'Nasal-only breathing during all easy training',plain:'Forcing yourself to breathe only through your nose during easy runs, walks, and cycling is uncomfortable at first — but that discomfort is the training stimulus. Your body has to adapt its CO₂ chemistry to cope. This is the most effective BOLT improver in the first two weeks because it provides constant, gentle adaptation all day rather than in isolated sessions. Athletes who persist through the initial difficulty (usually 7–10 days) see their BOLT start rising sharply from Week 2.',feel:'Week 1: frustrating, feels like you\'re working harder. Week 2–3: suddenly much easier, and paces that required mouth breathing now don\'t.',feelCol:'#FAECE7',feelTxt:'#712B13'},
+    {week:'Weeks 3–4',name:'Exhale breath holds — 8 × 10–15 seconds with nasal recovery (12 min)',plain:'After a normal exhale, hold your breath for 10–15 seconds, walk or breathe gently through your nose to recover, then repeat. This is direct CO₂ tolerance training — each hold exposes your alarm system to elevated CO₂ and trains it to stay calm. Each session of 8 holds raises BOLT by approximately 0.5–1 second. After 2 weeks, you\'ll notice you can hold for longer before the urge to breathe kicks in.',feel:'By Week 4: the sense of "I\'m running out of air" during exercise comes later and feels less urgent.',feelCol:'#FAECE7',feelTxt:'#712B13'},
+    {week:'Weeks 5–6',name:'Walking breath hold protocol — 8–10 holds while walking (15 min)',plain:'Same breath holds, but done while walking — adding metabolic CO₂ from movement to the training signal. This is the most powerful BOLT driver in the programme. Bezruk et al. (2024) found +15.8% improvement in maximal apnea and +12.4% in lung capacity over 8 weeks with this protocol. Use steps as your benchmark: if you can walk 15 steps per hold in Week 5, aim for 22 steps by Week 8.',feel:'A very physical sense of expanded capacity — like someone turned up the ceiling on your fitness.',feelCol:'#FAECE7',feelTxt:'#712B13'}
+   ],
+   summary:'BOLT is the most practical measure of breathing fitness. <strong>Going from 16 to 27 seconds means your breathlessness threshold has almost doubled</strong> — you can work significantly harder before your breathing becomes a limiting factor. The improvement comes entirely from CO₂ tolerance training, not lung capacity or fitness.',
+   reality:'Check your BOLT score weekly: exhale normally, pinch your nose, time until the first definite urge to breathe. Do this at the same time each day (first thing in the morning is ideal). Watching this number climb is addictive.',
+   sci:'McKeown norms: <20 s = dysfunctional, 20–30 = good, 40+ = optimal. Bezruk 2024 Sports (Basel) PMC11209488 (n=19): +15.8% maximal apnea, FVC +12.4%, HR −9.1% post-training. Expected W0 16 → W8 27 s.'},
+  {icon:'⚡',label:'Recovery speed',sublabel:'How fast your heart rate and readiness bounce back',
+   head:'You recover faster after hard sessions',sub:'This tracks how quickly your heart rate variability returns to normal after training. Faster recovery = more training quality, less injury risk, better adaptation.',
+   v:[100,100,103,106,110,115,120,125,130],ci:[5,5,5,5,6,6,7,7,8],u:'% of start',dir:1,
+   startTxt:'Your baseline recovery speed',endTxt:'After 8 weeks (+30%)',
+   feel:'Practically: feeling ready to train again a day sooner, waking up less stiff and heavy after hard sessions, sleeping better on hard training days.',
+   exercises:[
+    {week:'Weeks 7–8',name:'5-minute coherent breathing immediately after training',plain:'This is the single most impactful recovery exercise. Rather than immediately collapsing on the sofa or scrolling your phone after a workout, 5 minutes of breathing at 5.5 breaths per minute activates your parasympathetic nervous system — the recovery mode. Clinical research shows this compresses the time your body spends in post-exercise stress state by 10–15 minutes, meaning recovery starts significantly earlier. Over weeks, this accumulates into faster overall adaptation and readiness.',feel:'A noticeably quicker transition from "wrecked" to "okay." Hard sessions feel less wiping by Week 8.',feelCol:'#FAECE7',feelTxt:'#712B13'},
+    {week:'Weeks 7–8',name:'Post-training exhale holds — 8 × 8 seconds gentle nasal (10 min)',plain:'These gentle holds after training maintain CO₂ at healthy levels during recovery, preventing the sympathetic nervous system from staying in overdrive. Combined with the coherent breathing, they compress the full recovery window by 30–40% by Week 8.',feel:'Less of that "still wired" feeling 2 hours after hard training.',feelCol:'#FAECE7',feelTxt:'#712B13'}
+   ],
+   summary:'Recovery speed is the hidden performance lever most athletes neglect. <strong>30% faster HRV recovery by Week 8</strong> means more training quality in the same amount of time, less accumulation of fatigue, and better results from the same workload. The post-training breathing protocol is the key intervention — just 5–15 minutes after each session.',
+   reality:'Measure this with any HRV app (Elite HRV, HRV4Training, or your Apple Watch/Garmin morning readiness score). Track how quickly it returns to your baseline after hard sessions. The trend across 8 weeks should be unmistakable.',
+   sci:'PMC8134285: HRV biofeedback during recovery raised RMSSD, SDNN, LF vs free-breathing (all p<0.01); recovery time decreased (p<0.05). Expected 30–40% faster RMSSD return to baseline by Week 8.'},
+  {icon:'🏅',label:'Exercise breathing rate',sublabel:'Breaths per minute during moderate effort — lower is more efficient',
+   head:'Exercise feels easier at the same pace',sub:'This shows your breathing rate during moderate exercise. Lower means more efficient — each breath is doing more work, so your respiratory muscles demand less oxygen, leaving more for your legs and lungs.',
+   v:[36,35,34,32,30,29,28,27,26],ci:[2,2,2,2,2,2,2,2,2],u:'breaths/min',dir:-1,
+   startTxt:'Typical at moderate effort',endTxt:'After 8 weeks',
+   feel:'Paces that used to make you mouth-breathe heavily become sustainable at nasal pace. Your effort ceiling rises.',
+   exercises:[
+    {week:'Weeks 1–8',name:'Nasal-only training at all easy-moderate paces',plain:'Nasal-only exercise training forces your body to slow breathing frequency and increase tidal volume — each breath moves more air, fewer times. This is efficient breathing. Dallam et al. (2018) found 2–4 fewer breaths per minute at the same pace after 4–6 weeks of nasal-only training. The first 7–10 days feel unnatural; after that, the adaptation arrives and efficiency measurably improves.',feel:'The "I need to open my mouth" threshold keeps rising throughout the 8 weeks.',feelCol:'#FAECE7',feelTxt:'#712B13'}
+   ],
+   summary:'Going from 36 to 26 breaths per minute at the same pace means your respiratory system is <strong>28% more efficient</strong>. The oxygen cost of breathing itself has dropped — that oxygen now goes to your working muscles instead. You\'ll feel this as exercise simply becoming easier at paces that used to push you.',
+   reality:'Test this on your next easy run or bike: note your breathing rate (count for 15 seconds × 4) at a fixed effort level. Retest monthly. The improvement is tangible and consistent.',
+   sci:'Dallam et al. 2018 Int J Kinesiology Sports Sci: nasal-only training −2–4 BPM at submaximal intensities after 4–6 weeks. McKeown Oxygen Advantage performance protocols.'},
+  {icon:'💪',label:'Natural performance booster (nasal NO)',sublabel:'Nitric oxide from nasal breathing — a natural vasodilator',
+   head:'Every nasal breath delivers a natural performance gas',sub:'Your nose and sinuses produce nitric oxide — a gas that relaxes blood vessels and improves oxygen delivery. Nasal breathing delivers 4–6× more of it per breath than mouth breathing.',
+   v:[52,54,57,60,63,66,68,70,72],ci:[4,4,4,4,5,5,5,5,6],u:'ppb',dir:1,
+   startTxt:'Nasal NO at start of programme',endTxt:'After 8 weeks',
+   feel:'You won\'t feel nitric oxide directly — but better pulmonary blood flow means exercise feels slightly easier and recovery slightly faster. It\'s a background upgrade to your oxygen system.',
+   exercises:[
+    {week:'All 8 weeks',name:'Nasal breathing — every breath, all sessions, all training',plain:'Every nasal breath picks up nitric oxide from your sinuses and delivers it to your lungs, where it widens the tiny blood vessels around your air sacs and improves oxygen transfer. Mouth breathing delivers virtually none of this. Nasal-only training over 8 weeks progressively increases the nose\'s ability to produce this gas — the adaptation is measurable. Lundberg (1995) confirmed nasal exhaled NO is 25 ppb vs 6 ppb oral — a 4× difference per breath, across thousands of breaths per day.',feel:'Indirectly felt as improved endurance and less effort at the same pace.',feelCol:'#FAECE7',feelTxt:'#712B13'}
+   ],
+   summary:'Nitric oxide is, essentially, a free, natural, legal vasodilator that you can access by simply breathing through your nose. <strong>After 8 weeks of nasal-only training, nasal NO production is meaningfully higher</strong>, and every breath during exercise is delivering more of it — improving pulmonary blood flow and oxygen extraction with zero side effects.',
+   reality:'You can\'t measure this at home. But you\'ll notice its effects — slightly less breathlessness at any given pace, slightly faster recovery. Think of it as a small but consistent compound interest on every single training session.',
+   sci:'Lundberg & Weitzberg 1995 Thorax 54:947–952: nasal exhaled NO 25±2 ppb vs oral 6±1 ppb. Total nasal NO output ~157 nL/min. Nasal NO ~6× higher than oral per breath.'},
+ ]
+},
+
+{name:'Better Sleep',icon:'🌙',col:'#378ADD',colL:'#E6F1FB',colD:'#0C447C',
+ goal:'Fall asleep faster, sleep through the night, and wake up actually rested',
+ forWho:'Best for you if: you lie awake for ages before sleep, wake in the night, feel unrefreshed in the morning, snore, or just never feel like you\'ve properly slept.',
+ phases:[{l:'Weeks 1–2: Winding down properly',w:[0,2],c:'#B5D4F4'},{l:'Weeks 3–4: Fixing the chemistry',w:[2,4],c:'#85B7EB'},{l:'Weeks 5–6: The sleep switch',w:[4,6],c:'#378ADD'},{l:'Weeks 7–8: Solid, reliable sleep',w:[6,8],c:'#0C447C'}],
+ metrics:[
+  {icon:'💤',label:'Time to fall asleep',sublabel:'Minutes from lights out to asleep — lower is better',
+   head:'You fall asleep much faster',sub:'Time from getting into bed to falling asleep. Going from 38 minutes to 14 minutes is the difference between dreading bedtime and actually looking forward to it.',
+   v:[38,35,30,26,23,20,18,16,14],ci:[4,4,4,4,4,4,4,4,4],u:'minutes',dir:-1,
+   startTxt:'Typical starting point (38 min)',endTxt:'After 8 weeks (14 min)',
+   feel:'The difference between lying there watching the minutes pass and simply... drifting off. It sounds simple. For chronic poor sleepers it can feel life-changing.',
+   exercises:[
+    {week:'Weeks 1–2',name:'Evening ribcage release — extended exhale (6–8 seconds, 10 min)',plain:'Lying on your back, you breathe in gently for 4 seconds and out for 6–8 seconds. The long exhale is the key: it directly stimulates the vagus nerve, the main cable of your parasympathetic (rest and digest) nervous system. Sleep onset requires your nervous system to shift out of vigilance mode — this exercise initiates that shift faster than almost anything else. Most people notice falling asleep faster within the first 3–5 sessions.',feel:'Immediate softening of chest tension and mental chatter. The body starts "landing."',feelCol:'#E6F1FB',feelTxt:'#0C447C'},
+    {week:'Weeks 3–4',name:'Pre-sleep CO₂ reset — breathing at 70% volume (12 min)',plain:'Most people arrive at bedtime with slightly too-low CO₂ from an evening of screens and stress. Low CO₂ keeps the nervous system slightly alert — your body senses something is biochemically "off" and won\'t fully relax. Breathing slightly less than comfortable for 12 minutes gently raises CO₂, shifting the body\'s chemistry to the range where sleep naturally occurs. By Week 4, users describe their breath becoming "almost imperceptible" during this practice — a reliable sign it\'s working.',feel:'The quality of the drowsiness changes — becomes heavier and more physical rather than just feeling tired.',feelCol:'#E6F1FB',feelTxt:'#0C447C'},
+    {week:'Weeks 5–6',name:'Left-nostril breathing in bed (10 min) — the sleep switch',plain:'This is the most powerful sleep onset technique in the programme. Lie on your side (left-nostril down — this naturally opens the left nostril), close your right nostril with your finger or just focus airflow left, and breathe slowly for 10 minutes. Left-nostril breathing drives right-hemisphere dominance and parasympathetic activation — the exact neurological state required for sleep onset. Most users fall asleep during this practice within 1–2 weeks of starting it. If you fall asleep mid-session, that is the correct outcome.',feel:'Many people describe this as the first thing that has ever reliably made them sleepy on demand.',feelCol:'#E6F1FB',feelTxt:'#0C447C'},
+    {week:'Weeks 5–6',name:'4-7-8 breathing — 4–8 cycles before sleep',plain:'Breathe in for 4 counts, hold for 7, exhale for 8. The 7-second hold creates a powerful parasympathetic surge via the baroreceptors (pressure sensors in your arteries). The 8-second exhale sustains it. This produces the physiological conditions of early sleep onset — low heart rate, high heart resilience, lowered arousal threshold. Most people are asleep or extremely drowsy after 3–4 cycles by Week 6. This also works in the night if you wake up.',feel:'A distinctly physical drowsiness — not just tiredness, but the body actively entering sleep-ready state.',feelCol:'#E6F1FB',feelTxt:'#0C447C'}
+   ],
+   summary:'Sleep onset is governed by your nervous system\'s ability to release sympathetic vigilance. This programme removes every barrier in sequence: Phase 1 releases physical tension, Phase 2 corrects the CO₂ chemistry that keeps you alert, Phase 3 provides the direct neurological switch. <strong>Going from 38 to 14 minutes by Week 8</strong> means the average night returns over an hour of sleep time per week.',
+   reality:'Track this in your phone notes or a sleep journal: estimate your sleep onset time each morning. The trajectory is usually sharp — many people see a 10+ minute improvement in the first two weeks just from the extended exhale practice.',
+   sci:'Doğan 2026 Complement Ther Clin Pract (NCT06103344) 4-wk RCT nursing students: SOL subscale MD −0.54. WJARR 2025 pilot: 38.5→18.7 min (p<0.001) in 10 days. Tsai J Clin Sleep Med.'},
+  {icon:'🛌',label:'Overall sleep quality',sublabel:'PSQI score — lower is better (5 or below = good sleep)',
+   head:'Your sleep quality score reaches healthy levels',sub:'The PSQI is the standard clinical measure of sleep quality, scoring 0–21. Below 5 is good sleep. This shows your trajectory from poor to good across 8 weeks.',
+   v:[9.2,8.8,8.2,7.5,7.0,6.4,6.0,5.6,5.4],ci:[0.8,0.8,0.8,0.8,0.8,0.8,0.8,0.8,0.8],u:'score (0–21)',dir:-1,
+   startTxt:'Starting PSQI (9.2 = poor sleep)',endTxt:'After 8 weeks (5.4 = good sleep)',
+   feel:'Moving from poor to good sleep quality affects everything: mood, cognitive performance, immune function, pain tolerance, weight management, and emotional resilience all improve meaningfully.',
+   exercises:[
+    {week:'Weeks 1–2',name:'Evening breathing routine (10 min)',plain:'Directly improves the "subjective sleep quality" and "sleep latency" subscales of PSQI from the first week. The extended exhale initiates the parasympathetic shift needed for sleep. Clinical RCT by Doğan et al. (2026) confirmed a significant PSQI improvement from 4-week practice of this alone.',feel:'Noticing you feel more rested when you wake up — even before the full programme has built.',feelCol:'#E6F1FB',feelTxt:'#0C447C'},
+    {week:'Weeks 3–4',name:'Nasal breathing during sleep (all night)',plain:'Many brief wakings during the night are caused by micro-arousals from partial airway collapse — a result of mouth breathing lowering CO₂ and relaxing the throat muscles. Nasal breathing prevents this. The "sleep disturbances" and "sleep efficiency" subscales of PSQI improve most noticeably from Week 4 when nasal sleep breathing is established.',feel:'Fewer "thin" nights where you technically slept 8 hours but feel like you didn\'t.',feelCol:'#E6F1FB',feelTxt:'#0C447C'}
+   ],
+   summary:'PSQI captures seven aspects of sleep simultaneously. This programme improves all of them — different exercises target different subscales in sequence. <strong>Reaching a score of 5.4 by Week 8</strong> means sleep has crossed the clinical threshold from "poor" to "good" — a change that affects every area of daily life.',
+   reality:'If you have a sleep tracker (Oura Ring, Garmin, Apple Watch), use it to track sleep stages across the 8 weeks. You should see deep sleep and REM both increasing from around Week 4.',
+   sci:'Doğan 2026: total PSQI MD −2.76 (95% CI −3.76 to −1.76) at 4 weeks. WJARR 2025: PSQI 9.2→5.4 over 10 days. PSQI ≤5 = good sleep quality clinical threshold.'},
+  {icon:'🔇',label:'Snoring & night disturbances',sublabel:'Relative snoring frequency — lower is better',
+   head:'Less snoring, fewer disruptions',sub:'Snoring is caused by a partially collapsed airway. Mouth breathing is the main driver. As nasal breathing becomes habitual, the airway stays open and snoring reduces.',
+   v:[100,97,92,86,80,75,70,66,63],ci:[8,8,8,8,8,8,8,8,8],u:'% of start',dir:-1,
+   startTxt:'Starting frequency (100%)',endTxt:'After 8 weeks (−37%)',
+   feel:'Your partner will notice this before you do. Fewer elbow nudges in the night, less sleeping in separate rooms, better rest for both of you.',
+   exercises:[
+    {week:'Weeks 1–8',name:'Nasal breathing — day and night',plain:'Snoring requires two things: an open mouth (creating throat suction) and relaxed throat muscles (due to low CO₂). Nasal breathing eliminates both. The mouth stays closed and CO₂ stays high enough to maintain throat muscle tone throughout the night. For mouth-breathers, this is often the most dramatic and fastest result of the entire programme.',feel:'Partners often report improvement within the first 2 weeks of consistent nasal sleep breathing.',feelCol:'#E6F1FB',feelTxt:'#0C447C'},
+    {week:'Weeks 3–4',name:'Optional mouth tape (Phase 2 — if nasal passages are clear)',plain:'A small piece of medical tape over the lips physically ensures nasal breathing during sleep. Lee et al. (2022) found significant snoring and breathing event reduction in mild sleep-apnoea mouth-breathers. Note: only appropriate if your nose is completely unobstructed — do not use if you have nasal congestion, polyps, or any breathing difficulty. If in doubt, skip this and rely on the habit.',feel:'Immediate: no mouth breathing. Most users report feeling noticeably more rested in the morning after the first taped night.',feelCol:'#E6F1FB',feelTxt:'#0C447C'}
+   ],
+   summary:'Snoring reduction is one of the most practically impactful results of Programme 4 — affecting sleep quality for both you and your partner. <strong>A ~37% reduction by Week 8</strong> is the typical outcome for mouth-breathing snorers who consistently adopt nasal breathing. The confidence interval here is wide — results vary a lot by anatomy.',
+   reality:'Important caveat: if you have diagnosed moderate or severe sleep apnoea (AHI >15), breathing exercises alone are not sufficient — you need medical assessment. This programme is appropriate for primary snoring and mild sleep apnoea.',
+   sci:'Rhee et al. 2025 PLoS One systematic review (10 studies, 233 patients): only 2/6 AHI-reporting studies showed significant reduction — evidence is inconsistent. Lee 2022 Healthcare (mild OSA, n=20): significant snoring index reduction with mouth taping. Wide CI intentional — results highly variable.'},
+  {icon:'🌅',label:'Morning energy',sublabel:'Cortisol awakening response — how energised you feel on waking',
+   head:'You wake up feeling actually ready for the day',sub:'A healthy cortisol surge in the 30 minutes after waking is what creates morning energy and mental clarity. Poor sleep flattens this. This shows it recovering over 8 weeks.',
+   v:[28,30,33,36,39,42,44,46,48],ci:[4,4,4,4,4,4,4,5,5],u:'% rise after waking',dir:1,
+   startTxt:'Flattened morning response (28%)',endTxt:'After 8 weeks (48% — healthy range)',
+   feel:'The difference between waking up already exhausted and having a 15-minute window of "I can handle today" before the day starts. Most people describe it as the return of a feeling they\'d forgotten they used to have.',
+   exercises:[
+    {week:'Weeks 5–8',name:'Full nightly protocol — all three phases',plain:'The cortisol awakening response is driven by the quality of deep sleep in the hours before waking. Deep sleep requires an undisturbed night — no micro-arousals from breathing disruptions, no nocturnal hypocapnia spikes from mouth breathing. As the programme builds better sleep architecture from Weeks 4–5, each night\'s deep sleep becomes more restorative, and the morning cortisol surge recovers toward its healthy, energising level.',feel:'Week 6–8: waking up feels different. Less like dragging yourself out of unconsciousness, more like genuinely emerging from rest.',feelCol:'#E6F1FB',feelTxt:'#0C447C'},
+    {week:'Weeks 3–4',name:'Pre-sleep CO₂ reset → undisturbed deep sleep',plain:'Nocturnal arousal events (caused by mouth breathing and CO₂ disruptions) each produce a small cortisol spike that erodes the deep-sleep quality needed for a healthy morning response. Correcting the CO₂ chemistry before sleep reduces these events, allowing deeper and more continuous sleep cycles — each of which contributes to a stronger, healthier morning cortisol surge.',feel:'Many people notice the quality of their dreams improving around Week 4 — a reliable indicator of improved sleep depth.',feelCol:'#E6F1FB',feelTxt:'#0C447C'}
+   ],
+   summary:'Morning energy is determined by the quality of deep sleep the night before — not the quantity of hours. <strong>Reaching a 48% cortisol awakening response</strong> (healthy range: 40–60%) means your body is once again producing the morning energy surge that poor sleep had flattened. It\'s one of the most subjectively meaningful changes in the whole programme.',
+   reality:'Notice this as: the feeling when you first wake up. Do you feel dread? Heaviness? Or is there a moment of calm readiness? By Week 8, most people in this programme report the morning feeling has changed — even before they\'ve gotten out of bed.',
+   sci:'Healthy CAR: 38–75% rise (avg ~50%) above waking baseline, peaking 30–45 min post-waking. Chronic stress flattens CAR to <30%. Koeder et al. 2022: 8-week multimodal programme restored CAR slope. High individual variability — track your own morning energy rather than relying solely on numbers.'},
+ ]
+}
+];
+
+var curP=0,curM=0,showCI=true,theChart=null;
+function r1(x){return Math.round(x*10)/10;}
+
+function init(){
+  var pg=document.getElementById('progGrid');
+  PROGS.forEach(function(p,i){
+    var d=document.createElement('div');
+    d.className='prog-card'+(i===0?' active':'');
+    if(i===0){d.style.borderColor=p.col;}
+    d.innerHTML='<span class="prog-icon">'+p.icon+'</span>'+
+      '<div class="prog-card-name">'+p.name+'</div>'+
+      '<div class="prog-card-goal">'+p.goal+'</div>'+
+      '<span class="prog-card-tag" style="background:'+p.colL+';color:'+p.colD+'">'+p.phases.length+' phases · 8 weeks</span>';
+    d.addEventListener('click',function(){selProg(i);});
+    pg.appendChild(d);
+  });
+  document.getElementById('ciChk').addEventListener('change',function(){showCI=this.checked;render();});
+  buildChips(); render(); buildPhases();
+}
+
+function selProg(i){
+  curP=i; curM=0;
+  document.querySelectorAll('.prog-card').forEach(function(c,j){
+    c.classList.toggle('active',j===i);
+    c.style.borderColor=j===i?PROGS[j].col:'';
+  });
+  buildChips(); render(); buildPhases();
+  var fb=document.getElementById('forBanner');
+  var p=PROGS[i];
+  fb.style.background=p.colL;
+  fb.style.border='1px solid '+p.col+'44';
+  fb.innerHTML='<div class="for-icon">'+p.icon+'</div><div><strong style="color:'+p.colD+'">Is this programme for you?</strong><br><span style="color:'+p.colD+'">'+p.forWho+'</span></div>';
+}
+
+function buildChips(){
+  var row=document.getElementById('chips');
+  row.innerHTML='';
+  var p=PROGS[curP];
+  p.metrics.forEach(function(m,i){
+    var b=document.createElement('button');
+    b.className='notice-chip'+(i===curM?' active':'');
+    if(i===curM){b.style.background=p.col;}
+    b.innerHTML='<span class="chip-icon">'+m.icon+'</span>'+m.label;
+    b.addEventListener('click',function(){selMet(i);});
+    row.appendChild(b);
+  });
+}
+
+function selMet(i){
+  curM=i;
+  var p=PROGS[curP];
+  document.querySelectorAll('.notice-chip').forEach(function(b,j){
+    b.classList.toggle('active',j===i);
+    b.style.background=j===i?p.col:'';
+  });
+  render();
+}
+
+function render(){
+  var p=PROGS[curP],m=p.metrics[curM],v=m.v,ci=m.ci,col=p.col;
+  var chg=((v[8]-v[0])/Math.abs(v[0])*100);
+  var good=(m.dir===1&&chg>=0)||(m.dir===-1&&chg<=0);
+  var dc=good?'#1D9E75':'#D85A30';
+  var chgAbs=r1(v[8]-v[0]);
+  var chgSign=chgAbs>0?'+':'';
+
+  // for banner on first load
+  var fb=document.getElementById('forBanner');
+  if(!fb.innerHTML){
+    fb.style.background=p.colL;
+    fb.style.border='1px solid '+p.col+'44';
+    fb.innerHTML='<div class="for-icon">'+p.icon+'</div><div><strong style="color:'+p.colD+'">Is this programme for you?</strong><br><span style="color:'+p.colD+'">'+p.forWho+'</span></div>';
+  }
+
+  // snap cards
+  document.getElementById('snapRow').innerHTML=
+    '<div class="snap"><div class="snap-icon">📍</div><div class="snap-label">Where you start</div><div class="snap-val">'+r1(v[0])+'<span style="font-size:13px;font-weight:400;color:#99998F"> '+m.u+'</span></div><div class="snap-note" style="color:#99998F">'+m.startTxt+'</div></div>'+
+    '<div class="snap"><div class="snap-icon">📅</div><div class="snap-label">Halfway (week 4)</div><div class="snap-val">'+r1(v[4])+'<span style="font-size:13px;font-weight:400;color:#99998F"> '+m.u+'</span></div></div>'+
+    '<div class="snap"><div class="snap-icon">🎯</div><div class="snap-label">After 8 weeks</div><div class="snap-val">'+r1(v[8])+'<span style="font-size:13px;font-weight:400;color:#99998F"> '+m.u+'</span></div><div class="snap-note" style="color:#99998F">'+m.endTxt+'</div></div>'+
+    '<div class="snap"><div class="snap-icon">'+(good?'📈':'📉')+'</div><div class="snap-label">Total change</div><div class="snap-val" style="color:'+dc+'">'+chgSign+r1(chgAbs)+'<span style="font-size:13px"> '+m.u+'</span></div><div class="snap-note" style="color:'+dc+'">'+chgSign+r1(chg)+'%</div></div>';
+
+  document.getElementById('chartHead').textContent=m.head;
+  document.getElementById('chartSub').textContent=m.sub;
+
+  var datasets=[{
+    label:m.label,data:v.map(r1),
+    borderColor:col,backgroundColor:col,
+    borderWidth:2.5,pointRadius:5,pointHoverRadius:7,
+    pointBackgroundColor:col,tension:0.32,fill:false,order:1
+  }];
+  if(showCI){
+    datasets.push({label:'upper',data:v.map(function(x,i){return r1(x+ci[i]);}),
+      borderColor:'transparent',backgroundColor:col+'28',pointRadius:0,tension:0.32,fill:'+1',order:2});
+    datasets.push({label:'lower',data:v.map(function(x,i){return r1(x-ci[i]);}),
+      borderColor:'transparent',backgroundColor:col+'28',pointRadius:0,tension:0.32,fill:false,order:3});
+  }
+  if(theChart){theChart.destroy();theChart=null;}
+  theChart=new Chart(document.getElementById('MC'),{
+    type:'line',
+    data:{labels:['Start','Week 1','Week 2','Week 3','Week 4','Week 5','Week 6','Week 7','Week 8'],datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            title:function(items){return items[0].label;},
+            label:function(ctx){
+              if(ctx.dataset.label==='upper'||ctx.dataset.label==='lower')return null;
+              return m.label+': '+r1(ctx.parsed.y)+' '+m.u;
+            },
+            afterBody:function(items){
+              var idx=items[0].dataIndex;
+              return showCI?['Typical range: '+r1(v[idx]-ci[idx])+'–'+r1(v[idx]+ci[idx])+' '+m.u]:[];
+            }
+          },
+          filter:function(item){return item.dataset.label!=='upper'&&item.dataset.label!=='lower';}
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:12,family:'Nunito'},color:'#99998F',autoSkip:false,maxRotation:0}},
+        y:{grid:{color:'rgba(0,0,0,0.04)'},
+           ticks:{font:{size:11,family:'Nunito'},color:'#99998F',callback:function(v){return r1(v);}},
+           title:{display:true,text:m.label+' ('+m.u+')',font:{size:11,family:'Nunito'},color:'#99998F'}}
+      }
+    }
+  });
+
+  document.getElementById('explainEye').textContent='What you\'ll feel — and why';
+  document.getElementById('explainEye').style.color=col;
+  document.getElementById('explainTitle').textContent=m.icon+' '+m.label+': How '+PROGS[curP].name.toLowerCase()+' exercises drive this change';
+
+  var exHTML=m.exercises.map(function(ex){
+    return '<div class="ex-row">'+
+      '<div class="ex-stripe" style="background:'+col+'"></div>'+
+      '<div class="ex-inner">'+
+        '<div class="ex-week">'+ex.week+'</div>'+
+        '<div class="ex-name">'+ex.name+'</div>'+
+        '<div class="ex-plain">'+ex.plain+'</div>'+
+        '<span class="ex-feel" style="background:'+ex.feelCol+';color:'+ex.feelTxt+'">✦ What you\'ll notice: '+ex.feel+'</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  document.getElementById('exRows').innerHTML=exHTML;
+
+  document.getElementById('plainSum').innerHTML=m.summary;
+  document.getElementById('realityCheck').innerHTML='<strong>Real-world check:</strong> '+m.reality;
+
+  document.getElementById('sciNote').textContent=m.sci;
+  document.getElementById('sciChk').checked=false;
+  document.getElementById('sciNote').classList.remove('show');
+  document.getElementById('sciChk').onchange=function(){
+    document.getElementById('sciNote').classList.toggle('show',this.checked);
+  };
+}
+
+function buildPhases(){
+  var p=PROGS[curP];
+  document.getElementById('phaseRow').innerHTML=p.phases.map(function(ph){
+    return '<div class="phase-pip"><div class="phase-dot" style="background:'+ph.c+'"></div>'+ph.l+'</div>';
+  }).join('');
+}
+
+init();
+</script>
+</body>
+</html>
