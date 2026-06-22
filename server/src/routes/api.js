@@ -63,6 +63,25 @@ router.post('/admin/programmes', requireAuth, requireAdmin, async (req, res) => 
   res.json(data)
 })
 
+// PATCH /api/admin/programmes/:id — rename / extend a programme
+router.patch('/admin/programmes/:id', requireAuth, requireAdmin, async (req, res) => {
+  const { name, color, week_count } = req.body
+  const updates = {}
+  if (name != null) updates.name = name
+  if (color != null) updates.color = color
+  if (week_count != null) updates.week_count = week_count
+
+  const { data, error } = await supabaseAdmin
+    .from('programmes')
+    .update(updates)
+    .eq('id', req.params.id)
+    .select()
+    .single()
+
+  if (error) return res.status(500).json({ error: 'Failed to update programme.' })
+  res.json(data)
+})
+
 // PATCH /api/admin/users/:id/programme — reassign a user to a (possibly custom) programme
 router.patch('/admin/users/:id/programme', requireAuth, requireAdmin, async (req, res) => {
   const { programme_id } = req.body
