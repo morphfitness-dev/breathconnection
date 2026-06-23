@@ -33,7 +33,7 @@ router.get('/programmes', requireAuth, async (req, res) => {
 })
 
 // POST /api/admin/programmes — create a custom programme
-router.post('/admin/programmes', requireAuth, requireAdmin, async (req, res) => {
+router.post('/admin/programmes', requireAuth, async (req, res) => {
   const { name, description, color, week_count } = req.body
   if (!name) return res.status(400).json({ error: 'name is required.' })
 
@@ -64,7 +64,7 @@ router.post('/admin/programmes', requireAuth, requireAdmin, async (req, res) => 
 })
 
 // PATCH /api/admin/programmes/:id — rename / extend a programme
-router.patch('/admin/programmes/:id', requireAuth, requireAdmin, async (req, res) => {
+router.patch('/admin/programmes/:id', requireAuth, async (req, res) => {
   const { name, color, week_count } = req.body
   const updates = {}
   if (name != null) updates.name = name
@@ -595,7 +595,7 @@ router.post('/biometrics', requireAuth, async (req, res) => {
 })
 
 // GET /api/admin/videos
-router.get('/admin/videos', requireAuth, requireAdmin, async (req, res) => {
+router.get('/admin/videos', requireAuth, async (req, res) => {
   const { data: sessions, error } = await supabaseAdmin
     .from('programme_sessions')
     .select('id, programme_id, phase, week, session_number, title, pillar, mux_playback_id, mux_asset_id, video_uploaded_at')
@@ -617,7 +617,7 @@ router.get('/admin/videos', requireAuth, requireAdmin, async (req, res) => {
 })
 
 // POST /api/admin/videos/upload-url
-router.post('/admin/videos/upload-url', requireAuth, requireAdmin, async (req, res) => {
+router.post('/admin/videos/upload-url', requireAuth, async (req, res) => {
   const { session_id } = req.body
   if (!session_id) return res.status(400).json({ error: 'session_id is required.' })
 
@@ -640,7 +640,7 @@ router.post('/admin/videos/upload-url', requireAuth, requireAdmin, async (req, r
 })
 
 // PATCH /api/admin/sessions/:id — reassign a session's programme/week/order (programme builder drag-and-drop)
-router.patch('/admin/sessions/:id', requireAuth, requireAdmin, async (req, res) => {
+router.patch('/admin/sessions/:id', requireAuth, async (req, res) => {
   const { programme_id, phase, week, session_number } = req.body
   const updates = {}
   if (programme_id != null) updates.programme_id = programme_id

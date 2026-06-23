@@ -125,9 +125,9 @@ function AppRoutes() {
         <Route
           path="/admin/builder"
           element={
-            <AdminRoute>
+            <ProtectedRoute>
               <AdminProgrammeBuilderPage />
-            </AdminRoute>
+            </ProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/login" replace />} />
